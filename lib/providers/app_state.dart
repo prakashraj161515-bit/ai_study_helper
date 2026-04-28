@@ -14,6 +14,8 @@ class AppState extends ChangeNotifier {
   List<StudyHistoryItem> _history = [];
   int _dailyCount = 0;
   bool _isOffline = false;
+  String? _userName;
+  String? _userPhoto;
 
   bool get isPremium => _isPremium;
   UserProgress get progress => _progress;
@@ -21,6 +23,8 @@ class AppState extends ChangeNotifier {
   int get dailyCount => _dailyCount;
   bool get canAskQuestion => _isPremium || _dailyCount < 15;
   bool get isOffline => _isOffline;
+  String? get userName => _userName;
+  String? get userPhoto => _userPhoto;
 
   AppState() {
     _loadInitialData();
@@ -39,6 +43,19 @@ class AppState extends ChangeNotifier {
     _progress = await _storage.getProgress();
     _history = await _storage.getHistory();
     _dailyCount = await _storage.getDailyQuestionCount();
+    _userName = await _storage.getUserName();
+    _userPhoto = await _storage.getUserPhoto();
+    notifyListeners();
+  }
+
+  Future<void> setProfile(String name, String? base64Photo) async {
+    _userName = name;
+    await _storage.setUserName(name);
+    
+    if (base64Photo != null) {
+      _userPhoto = base64Photo;
+      await _storage.setUserPhoto(base64Photo);
+    }
     notifyListeners();
   }
 

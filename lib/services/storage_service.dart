@@ -8,6 +8,28 @@ class StorageService {
   static const String _keyPremium = 'is_premium';
   static const String _keyDailyCount = 'daily_question_count';
   static const String _keyLastQuestionDate = 'last_question_date';
+  static const String _keyUserName = 'user_name';
+  static const String _keyUserPhoto = 'user_photo';
+
+  Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUserName);
+  }
+
+  Future<void> setUserName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserName, name);
+  }
+
+  Future<String?> getUserPhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUserPhoto);
+  }
+
+  Future<void> setUserPhoto(String base64Image) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserPhoto, base64Image);
+  }
 
   Future<void> saveHistoryItem(StudyHistoryItem item, {int maxItems = 20}) async {
     final prefs = await SharedPreferences.getInstance();

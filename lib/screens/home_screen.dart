@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import 'input_screen.dart';
 import 'history_screen.dart';
 import 'progress_screen.dart';
 import 'premium_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -122,33 +124,49 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildWelcomeCard(BuildContext context) {
     final state = context.watch<AppState>();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: Icon(CupertinoIcons.person_fill, color: Theme.of(context).primaryColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome Back!',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    state.isPremium ? 'Premium Plan Active' : 'Free Plan: ${15 - state.dailyCount} questions left',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
+    
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+      ),
+      borderRadius: BorderRadius.circular(16),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                backgroundImage: state.userPhoto != null 
+                    ? MemoryImage(base64Decode(state.userPhoto!)) 
+                    : null,
+                child: state.userPhoto == null 
+                    ? Icon(CupertinoIcons.person_fill, color: Theme.of(context).primaryColor)
+                    : null,
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      state.userName != null && state.userName!.isNotEmpty 
+                          ? 'Welcome Back, ${state.userName}!' 
+                          : 'Welcome Back!',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      state.isPremium ? 'Premium Plan Active' : 'Free Plan: ${15 - state.dailyCount} questions left',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(CupertinoIcons.pencil_circle_fill, color: Colors.blue),
+            ],
+          ),
         ),
       ),
     );
