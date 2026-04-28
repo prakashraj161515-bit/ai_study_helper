@@ -17,11 +17,15 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('AI Study Helper'),
         actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.star_fill, size: 24, color: Colors.amber),
+          TextButton.icon(
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const PremiumScreen()),
+            ),
+            icon: const Icon(CupertinoIcons.star_fill, size: 20, color: Colors.amber),
+            label: const Text(
+              'Premium',
+              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
             ),
           ),
         ],
