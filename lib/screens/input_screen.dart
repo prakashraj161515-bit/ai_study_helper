@@ -44,18 +44,30 @@ class _InputScreenState extends State<InputScreen> {
     if (!_isListening) {
       bool available = await _speech.initialize(
         onStatus: (val) {
-          if (val == 'done') {
+          if (val == 'done' || val == 'notListening') {
             setState(() => _isListening = false);
           }
         },
-        onError: (val) => print('onError: $val'),
+        onError: (val) {
+          print('onError: $val');
+          setState(() => _isListening = false);
+        },
       );
       if (available) {
         setState(() => _isListening = true);
+        // Save the current text so we can append to it
+        final currentText = _controller.text;
+        
         _speech.listen(
+          partialResults: false, // Prevents multiple repeats of the same word
+          listenMode: stt.ListenMode.dictation,
           onResult: (val) {
             setState(() {
-              _controller.text = val.recognizedWords;
+              if (currentText.isEmpty) {
+                _controller.text = val.recognizedWords;
+              } else {
+                _controller.text = '$currentText ${val.recognizedWords}';
+              }
             });
           },
         );
