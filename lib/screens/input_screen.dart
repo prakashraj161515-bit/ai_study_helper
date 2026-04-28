@@ -27,30 +27,16 @@ class _InputScreenState extends State<InputScreen> {
   bool _isListening = false;
   String _lastRecognizedWords = "";
 
+  bool _speechInitialized = false;
+
   @override
   void initState() {
     super.initState();
-    _handleInitialMode();
+    _initSpeech();
   }
 
-  void _handleInitialMode() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.mode == InputMode.scan) _pickImage(ImageSource.camera);
-      if (widget.mode == InputMode.upload) _pickImage(ImageSource.gallery);
-      if (widget.mode == InputMode.voice) _startListening();
-    });
-  }
-
-  void _startListening() async {
-    if (_isListening) {
-      _speech.stop();
-      setState(() => _isListening = false);
-      return;
-    }
-
-    setState(() => _isListening = true);
-
-    bool available = await _speech.initialize(
+  void _initSpeech() async {
+    _speechInitialized = await _speech.initialize(
       onStatus: (val) {
         if (val == 'done' || val == 'notListening') {
           if (mounted) setState(() => _isListening = false);
@@ -61,27 +47,53 @@ class _InputScreenState extends State<InputScreen> {
         if (mounted) setState(() => _isListening = false);
       },
     );
-    
-    if (available) {
-        _speech.listen(
-          listenMode: stt.ListenMode.dictation,
-          onResult: (val) {
-            if (val.recognizedWords != _lastRecognizedWords) {
-              setState(() {
-                _controller.text = val.recognizedWords;
-                _lastRecognizedWords = val.recognizedWords;
-              });
-            }
+    if (mounted) {
+      _handleInitialMode();
+    }
+  }
 
-            if (val.finalResult) {
-              _speech.stop();
-              setState(() => _isListening = false);
-            }
-          },
-        );
-      } else {
-        _showError("Speech recognition not available on this device/browser.");
-      }
+  void _handleInitialMode() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.mode == InputMode.scan) _pickImage(ImageSource.camera);
+      if (widget.mode == InputMode.upload) _pickImage(ImageSource.gallery);
+      if (widget.mode == InputMode.voice && _speechInitialized) _toggleListening();
+    });
+  }
+
+  void _toggleListening() {
+    if (!_speechInitialized) {
+      _showError("Speech recognition not available on this device/browser.");
+      return;
+    }
+
+    if (_isListening) {
+      _speech.stop();
+      setState(() => _isListening = false);
+      return;
+    }
+
+    _speech.cancel(); // Clear any previous active session
+    setState(() {
+      _isListening = true;
+      _lastRecognizedWords = ""; // Reset for new session
+    });
+
+    _speech.listen(
+      listenMode: stt.ListenMode.dictation,
+      onResult: (val) {
+        if (val.recognizedWords != _lastRecognizedWords) {
+          setState(() {
+            _controller.text = val.recognizedWords;
+            _lastRecognizedWords = val.recognizedWords;
+          });
+        }
+
+        if (val.finalResult) {
+          _speech.stop();
+          if (mounted) setState(() => _isListening = false);
+        }
+      },
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -141,7 +153,7 @@ class _InputScreenState extends State<InputScreen> {
             ? [
                 IconButton(
                   icon: Icon(_isListening ? CupertinoIcons.mic_solid : CupertinoIcons.mic, color: _isListening ? Colors.red : null),
-                  onPressed: _startListening,
+                  onPressed: _toggleListening,
                 ),
               ]
             : null,
