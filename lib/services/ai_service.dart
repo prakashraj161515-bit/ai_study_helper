@@ -8,13 +8,14 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
+  // Using current stable models to ensure they work
   final _mainModel = GenerativeModel(
-    model: 'gemini-3.1-flash-lite',
+    model: 'gemini-1.5-flash', 
     apiKey: getApiKey(),
   );
 
   final _fallbackModel = GenerativeModel(
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-1.5-flash-8b', // Lighter fallback
     apiKey: getApiKey(),
   );
 
@@ -24,15 +25,14 @@ class AIService {
 
   Future<String> getAnswer(String prompt, {bool detailed = false}) async {
     try {
-      // Try main model with retry logic
       return await _withRetry(() => callGeminiMain(prompt, detailed: detailed));
     } catch (e) {
-      // If main fails (even after retry), try fallback
+      print("Main model failed: $e");
       try {
         return await callGeminiFallback(prompt, detailed: detailed);
       } catch (e2) {
-        // Both failed
-        throw Exception("Server busy, try again");
+        print("Fallback model failed: $e2");
+        throw Exception("AI Error: ${e.toString().contains('API_KEY_INVALID') ? 'Invalid API Key' : 'Server busy, try again'}");
       }
     }
   }
@@ -41,7 +41,7 @@ class AIService {
     int retries = 1;
     while (true) {
       try {
-        return await action().timeout(const Duration(seconds: 2));
+        return await action().timeout(const Duration(seconds: 10)); // Increased timeout for web
       } catch (e) {
         if (retries <= 0) rethrow;
         retries--;
@@ -85,7 +85,6 @@ class AIService {
       Answer in the same language as the topic.
     """;
 
-    // Requirement: Use fallback model for MCQs
     final content = [Content.text(prompt)];
     final response = await _fallbackModel.generateContent(content);
     final text = response.text ?? "[]";
@@ -96,7 +95,7 @@ class AIService {
         : text.trim();
       return List<Map<String, dynamic>>.from(jsonDecode(jsonStr));
     } catch (e) {
-      throw Exception("Failed to parse MCQs: $e");
+      throw Exception("Failed to generate MCQs: $e");
     }
   }
 }
