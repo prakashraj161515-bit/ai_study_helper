@@ -59,7 +59,6 @@ class _InputScreenState extends State<InputScreen> {
         final currentText = _controller.text;
         
         _speech.listen(
-          partialResults: false, // Prevents multiple repeats of the same word
           listenMode: stt.ListenMode.dictation,
           onResult: (val) {
             setState(() {
