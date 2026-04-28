@@ -8,13 +8,10 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
-  // Single model configuration as requested
+  // Simplified configuration for better compatibility during deployment
   final _model = GenerativeModel(
     model: 'gemini-3.1-flash-lite-preview', 
     apiKey: getApiKey(),
-    tools: [
-      Tool(googleSearchRetrieval: GoogleSearchRetrieval())
-    ],
   );
 
   Future<String> askQuestion(String prompt, {bool detailed = false}) async {
@@ -23,7 +20,6 @@ class AIService {
 
   Future<String> getAnswer(String prompt, {bool detailed = false}) async {
     try {
-      // Try the single model with retry logic
       return await _withRetry(() => _generate(model: _model, prompt: prompt, detailed: detailed));
     } catch (e) {
       print("AI Error: $e");
@@ -35,11 +31,11 @@ class AIService {
     int retries = 1;
     while (true) {
       try {
-        return await action().timeout(const Duration(seconds: 15));
+        return await action().timeout(const Duration(seconds: 10));
       } catch (e) {
         if (retries <= 0) rethrow;
         retries--;
-        await Future.delayed(const Duration(milliseconds: 1000));
+        await Future.delayed(const Duration(milliseconds: 500));
       }
     }
   }
@@ -72,7 +68,6 @@ class AIService {
     """;
 
     final content = [Content.text(prompt)];
-    // Using the same single model for MCQs
     final response = await _model.generateContent(content);
     final text = response.text ?? "[]";
     
