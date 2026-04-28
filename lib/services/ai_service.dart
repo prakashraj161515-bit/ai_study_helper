@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'api_config.dart';
 
@@ -8,7 +9,6 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
-  // Simplified configuration for better compatibility during deployment
   final _model = GenerativeModel(
     model: 'gemini-3.1-flash-lite-preview', 
     apiKey: getApiKey(),
@@ -27,15 +27,37 @@ class AIService {
     }
   }
 
+  // New method to process images directly using Gemini (Works on Web!)
+  Future<String> processImage(Uint8List imageBytes, {String? prompt, bool detailed = false}) async {
+    try {
+      final systemPrompt = detailed 
+        ? "Analyze this image and provide a detailed explanation. Answer in the same language as detected in the image."
+        : "Extract text from this image and answer the question or summarize it clearly. Answer in the same language as detected in the image.";
+      
+      final content = [
+        Content.multi([
+          TextPart(prompt ?? systemPrompt),
+          DataPart('image/jpeg', imageBytes),
+        ])
+      ];
+
+      final response = await _model.generateContent(content);
+      return response.text ?? "No text detected in image.";
+    } catch (e) {
+      print("Image processing error: $e");
+      throw Exception("Failed to process image. Make sure it's a clear photo.");
+    }
+  }
+
   Future<String> _withRetry(Future<String> Function() action) async {
     int retries = 1;
     while (true) {
       try {
-        return await action().timeout(const Duration(seconds: 10));
+        return await action().timeout(const Duration(seconds: 15));
       } catch (e) {
         if (retries <= 0) rethrow;
         retries--;
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 1000));
       }
     }
   }

@@ -1,20 +1,23 @@
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'ai_service.dart';
 
 class OCRService {
-  final TextRecognizer _textRecognizer = TextRecognizer();
+  final AIService _ai = AIService();
 
   Future<String> recognizeText(XFile image) async {
-    final inputImage = InputImage.fromFilePath(image.path);
-    final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
-    
-    String text = recognizedText.text;
-    _textRecognizer.close();
-    
-    return text;
+    try {
+      // Read image as bytes (Works on Web, Android, iOS)
+      final bytes = await image.readAsBytes();
+      
+      // Use Gemini to process the image and extract text/answer
+      return await _ai.processImage(bytes);
+    } catch (e) {
+      print("OCR Error: $e");
+      throw Exception("Failed to process image: $e");
+    }
   }
 
   void dispose() {
-    _textRecognizer.close();
+    // No native resources to close anymore
   }
 }
