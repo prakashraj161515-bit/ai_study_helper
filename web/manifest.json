@@ -1,6 +1,6 @@
 {
-    "name": "ai_study_helper",
-    "short_name": "ai_study_helper",
+    "name": "Study Nova",
+    "short_name": "Study Nova",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",

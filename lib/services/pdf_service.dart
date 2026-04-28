@@ -13,7 +13,7 @@ class PDFService {
             child: pw.Column(
               mainAxisAlignment: pw.MainAxisAlignment.center,
               children: [
-                pw.Text('AI Study Helper - Marksheet', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.Text('Study Nova - Marksheet', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 20),
                 pw.Divider(),
                 pw.SizedBox(height: 20),

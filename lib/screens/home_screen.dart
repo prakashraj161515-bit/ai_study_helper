@@ -17,7 +17,7 @@ class HomeScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Study Helper'),
+        title: const Text('Study Nova'),
         actions: [
           TextButton.icon(
             onPressed: () => Navigator.push(
