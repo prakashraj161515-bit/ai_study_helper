@@ -15,8 +15,8 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   final AIService _ai = AIService();
-  List<Map<String, dynamic>> _questions = [];
-  List<int?> _userAnswers = []; // Track user's choices for review
+  List<dynamic> _questions = [];
+  List<int?> _userAnswers = [];
   int _currentIndex = 0;
   int _score = 0;
   bool _isLoading = true;
@@ -90,7 +90,7 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_showResult) return _buildResultSummary();
 
-    final question = _questions[_currentIndex];
+    final Map<String, dynamic> question = Map<String, dynamic>.from(_questions[_currentIndex]);
 
     return Scaffold(
       appBar: AppBar(title: Text('Quiz (${_currentIndex + 1}/${_questions.length})')),
@@ -99,9 +99,9 @@ class _QuizScreenState extends State<QuizScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            LinearProgressIndicator(value: (_currentIndex + 1) / _questions.length, borderRadius: BorderRadius.circular(10)),
+            LinearProgressIndicator(value: (_currentIndex + 1) / _questions.length),
             const SizedBox(height: 24),
-            Text(question['question'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(question['question'].toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             ...List.generate(
               (question['options'] as List).length,
@@ -160,8 +160,7 @@ class _QuizScreenState extends State<QuizScreen> {
       child: InkWell(
         onTap: () => _handleOptionTap(index),
         borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+        child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: bgColor,
@@ -172,7 +171,7 @@ class _QuizScreenState extends State<QuizScreen> {
             children: [
               Text(String.fromCharCode(65 + index), style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(width: 12),
-              Expanded(child: Text(question['options'][index], style: const TextStyle(fontSize: 16))),
+              Expanded(child: Text(question['options'][index].toString(), style: const TextStyle(fontSize: 16))),
               if (trailing != null) trailing,
             ],
           ),
@@ -207,7 +206,7 @@ class _QuizScreenState extends State<QuizScreen> {
             const Spacer(),
             SizedBox(width: double.infinity, height: 56, child: ElevatedButton(
               onPressed: _fetchQuestions,
-              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Start Quiz', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             )),
           ],
@@ -241,6 +240,7 @@ class _QuizScreenState extends State<QuizScreen> {
             const Spacer(),
             SizedBox(width: double.infinity, height: 56, child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Back to Home'),
             )),
           ],
@@ -261,7 +261,7 @@ class _QuizScreenState extends State<QuizScreen> {
 }
 
 class ReviewScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> questions;
+  final List<dynamic> questions;
   final List<int?> userAnswers;
   const ReviewScreen({super.key, required this.questions, required this.userAnswers});
 
@@ -273,10 +273,10 @@ class ReviewScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: questions.length,
         itemBuilder: (context, index) {
-          final q = questions[index];
-          final userChoice = userAnswers[index];
-          final correctIndex = q['correctIndex'];
-          final isCorrect = userChoice == correctIndex;
+          final Map<String, dynamic> q = Map<String, dynamic>.from(questions[index]);
+          final int? userChoice = userAnswers[index];
+          final int correctIndex = q['correctIndex'];
+          final bool isCorrect = userChoice == correctIndex;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 16),
@@ -291,7 +291,7 @@ class ReviewScreen extends StatelessWidget {
                     bool isUserSelection = userChoice == i;
                     bool isCorrectOption = correctIndex == i;
                     
-                    Color? textColor;
+                    Color textColor = Colors.black87;
                     if (isCorrectOption) textColor = Colors.green;
                     else if (isUserSelection && !isCorrect) textColor = Colors.red;
 
@@ -300,12 +300,12 @@ class ReviewScreen extends StatelessWidget {
                       child: Row(
                         children: [
                           Icon(
-                            isCorrectOption ? Icons.check_circle : (isUserSelection ? Icons.cancel : Icons.circle_outlined),
+                            isCorrectOption ? Icons.check_circle : (isUserSelection ? Icons.cancel : Icons.radio_button_unchecked),
                             size: 16,
-                            color: textColor ?? Colors.grey,
+                            color: textColor == Colors.black87 ? Colors.grey : textColor,
                           ),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(q['options'][i], style: TextStyle(color: textColor, fontWeight: isUserSelection || isCorrectOption ? FontWeight.bold : null))),
+                          Expanded(child: Text(q['options'][i].toString(), style: TextStyle(color: textColor, fontWeight: isUserSelection || isCorrectOption ? FontWeight.bold : null))),
                         ],
                       ),
                     );
@@ -313,7 +313,7 @@ class ReviewScreen extends StatelessWidget {
                   if (q['explanation'] != null) ...[
                     const Divider(height: 24),
                     Text('Explanation:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800])),
-                    Text(q['explanation'], style: const TextStyle(fontStyle: FontStyle.italic)),
+                    Text(q['explanation'].toString(), style: const TextStyle(fontStyle: FontStyle.italic)),
                   ]
                 ],
               ),
