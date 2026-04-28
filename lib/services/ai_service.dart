@@ -8,19 +8,13 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
-  // Model name updated to the preview version provided by you
-  // Added Google Search tool support
-  final _mainModel = GenerativeModel(
+  // Single model configuration as requested
+  final _model = GenerativeModel(
     model: 'gemini-3.1-flash-lite-preview', 
     apiKey: getApiKey(),
     tools: [
       Tool(googleSearchRetrieval: GoogleSearchRetrieval())
     ],
-  );
-
-  final _fallbackModel = GenerativeModel(
-    model: 'gemini-1.5-flash', // Keeping a working fallback
-    apiKey: getApiKey(),
   );
 
   Future<String> askQuestion(String prompt, {bool detailed = false}) async {
@@ -29,14 +23,11 @@ class AIService {
 
   Future<String> getAnswer(String prompt, {bool detailed = false}) async {
     try {
-      return await _withRetry(() => callGeminiMain(prompt, detailed: detailed));
+      // Try the single model with retry logic
+      return await _withRetry(() => _generate(model: _model, prompt: prompt, detailed: detailed));
     } catch (e) {
-      print("Error with main model: $e");
-      try {
-        return await callGeminiFallback(prompt, detailed: detailed);
-      } catch (e2) {
-        throw Exception("Server busy, try again");
-      }
+      print("AI Error: $e");
+      throw Exception("Server busy, try again");
     }
   }
 
@@ -44,21 +35,13 @@ class AIService {
     int retries = 1;
     while (true) {
       try {
-        return await action().timeout(const Duration(seconds: 15)); // Increased timeout for thinking/search
+        return await action().timeout(const Duration(seconds: 15));
       } catch (e) {
         if (retries <= 0) rethrow;
         retries--;
         await Future.delayed(const Duration(milliseconds: 1000));
       }
     }
-  }
-
-  Future<String> callGeminiMain(String prompt, {bool detailed = false}) async {
-    return _generate(model: _mainModel, prompt: prompt, detailed: detailed);
-  }
-
-  Future<String> callGeminiFallback(String prompt, {bool detailed = false}) async {
-    return _generate(model: _fallbackModel, prompt: prompt, detailed: detailed);
   }
 
   Future<String> _generate({
@@ -72,8 +55,6 @@ class AIService {
     
     final content = [Content.text("$systemPrompt\n\nQuestion: $prompt")];
     final response = await model.generateContent(content);
-    
-    // Some models might return search metadata, we just want the text
     return response.text ?? "No response from AI.";
   }
 
@@ -91,8 +72,8 @@ class AIService {
     """;
 
     final content = [Content.text(prompt)];
-    // Using fallback for MCQ generation to ensure speed and stability
-    final response = await _fallbackModel.generateContent(content);
+    // Using the same single model for MCQs
+    final response = await _model.generateContent(content);
     final text = response.text ?? "[]";
     
     try {
