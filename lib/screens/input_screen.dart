@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../providers/app_state.dart';
 import '../services/ocr_service.dart';
 import 'result_screen.dart';
@@ -21,10 +20,8 @@ class _InputScreenState extends State<InputScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final OCRService _ocr = OCRService();
-  final stt.SpeechToText _speech = stt.SpeechToText();
   
   bool _isLoading = false;
-  bool _isListening = false;
 
   @override
   void initState() {
@@ -51,25 +48,8 @@ class _InputScreenState extends State<InputScreen> {
         });
       } catch (e) {
         setState(() => _isLoading = false);
-        _showError("OCR Failed: $e");
+        _showError("Processing Failed: $e");
       }
-    }
-  }
-
-  Future<void> _toggleListening() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        _speech.listen(onResult: (val) {
-          setState(() {
-            _controller.text = val.recognizedWords;
-          });
-        });
-      }
-    } else {
-      setState(() => _isListening = false);
-      _speech.stop();
     }
   }
 
@@ -97,8 +77,10 @@ class _InputScreenState extends State<InputScreen> {
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showError(e.toString());
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showError(e.toString());
+      }
     }
   }
 
@@ -126,15 +108,6 @@ class _InputScreenState extends State<InputScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            if (widget.mode == InputMode.voice)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: FloatingActionButton(
-                  onPressed: _toggleListening,
-                  backgroundColor: _isListening ? Colors.red : Colors.blue,
-                  child: Icon(_isListening ? CupertinoIcons.stop_fill : CupertinoIcons.mic_fill),
-                ),
-              ),
             SizedBox(
               width: double.infinity,
               height: 56,
