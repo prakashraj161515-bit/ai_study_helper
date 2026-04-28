@@ -144,11 +144,11 @@ class _QuizScreenState extends State<QuizScreen> {
       if (isCorrect) {
         borderColor = Colors.green;
         bgColor = Colors.green.withOpacity(0.1);
-        trailing = const Icon(CupertinoIcons.check_mark_circled_fill, color: Colors.green);
+        trailing = const Icon(Icons.check_circle, color: Colors.green);
       } else if (isSelected) {
         borderColor = Colors.red;
         bgColor = Colors.red.withOpacity(0.1);
-        trailing = const Icon(CupertinoIcons.xmark_circle_fill, color: Colors.red);
+        trailing = const Icon(Icons.cancel, color: Colors.red);
       }
     } else if (isSelected) {
       borderColor = Theme.of(context).primaryColor;
