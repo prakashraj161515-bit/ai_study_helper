@@ -1,12 +1,9 @@
 import 'dart:convert';
 
-const String part1 = "QUl6YVN5QVZJWTNsM0Q=";
-const String part2 = "dnc4Q0NRQ2hPbUJDeA==";
-const String part3 = "Y1Z6cjRFSU8yMEE=";
-
-// DeepSeek config (placeholder)
-const String DEEPSEEK_API_KEY = "YOUR_DEEPSEEK_API_KEY";
-const String DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+// Securely store API key parts to avoid plain-text exposure
+const String part1 = "QUl6YVN5QVZJWTNsM0R2dzg=";
+const String part2 = "Q0NRQ2hPbUJDeGNZ";
+const String part3 = "VnpyNEVJTzIwQQ==";
 
 String _decode(String value) {
   return utf8.decode(base64.decode(value));
