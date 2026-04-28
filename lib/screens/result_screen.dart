@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import 'quiz_screen.dart';
@@ -16,7 +15,6 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  final FlutterTts _tts = FlutterTts();
   late String _currentAnswer;
   bool _isLoading = false;
 
@@ -24,10 +22,6 @@ class _ResultScreenState extends State<ResultScreen> {
   void initState() {
     super.initState();
     _currentAnswer = widget.answer;
-  }
-
-  Future<void> _speak() async {
-    await _tts.speak(_currentAnswer);
   }
 
   Future<void> _loadDetailed() async {
@@ -103,10 +97,10 @@ class _ResultScreenState extends State<ResultScreen> {
                 Expanded(
                   child: _buildActionButton(
                     context,
-                    'Voice',
-                    CupertinoIcons.speaker_2_fill,
+                    'Back Home',
+                    CupertinoIcons.house_fill,
                     Colors.orange,
-                    _speak,
+                    () => Navigator.of(context).popUntil((route) => route.isFirst),
                   ),
                 ),
               ],
@@ -153,11 +147,5 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _tts.stop();
-    super.dispose();
   }
 }
