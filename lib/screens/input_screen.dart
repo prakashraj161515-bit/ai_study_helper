@@ -41,22 +41,29 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   void _startListening() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize(
-        onStatus: (val) {
-          if (val == 'done' || val == 'notListening') {
-            setState(() => _isListening = false);
-          }
-        },
-        onError: (val) {
-          print('onError: $val');
+    if (_isListening) {
+      _speech.stop();
+      setState(() => _isListening = false);
+      return;
+    }
+
+    setState(() => _isListening = true); // Set immediately to prevent double taps
+
+    bool available = await _speech.initialize(
+      onStatus: (val) {
+        if (val == 'done' || val == 'notListening') {
           setState(() => _isListening = false);
-        },
-      );
-      if (available) {
-        setState(() => _isListening = true);
-        // Save the current text so we can append to it
-        final currentText = _controller.text;
+        }
+      },
+      onError: (val) {
+        print('onError: $val');
+        setState(() => _isListening = false);
+      },
+    );
+    
+    if (available) {
+      // Save the current text so we can append to it
+      final currentText = _controller.text;
         
         _speech.listen(
           listenMode: stt.ListenMode.dictation,
@@ -73,10 +80,6 @@ class _InputScreenState extends State<InputScreen> {
       } else {
         _showError("Speech recognition not available on this device/browser.");
       }
-    } else {
-      _speech.stop();
-      setState(() => _isListening = false);
-    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
