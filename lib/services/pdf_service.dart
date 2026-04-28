@@ -1,9 +1,6 @@
-import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
-import '../models/models.dart';
 
 class PDFService {
   Future<void> generateMarksheet(int score, int total, String topic) async {
@@ -33,6 +30,7 @@ class PDFService {
       ),
     );
 
+    // Printing.layoutPdf works on Web without dart:io
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
 }
