@@ -8,14 +8,13 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
-  // Using current stable models to ensure they work
   final _mainModel = GenerativeModel(
-    model: 'gemini-1.5-flash', 
+    model: 'gemini-3.1-flash-lite', 
     apiKey: getApiKey(),
   );
 
   final _fallbackModel = GenerativeModel(
-    model: 'gemini-1.5-flash-8b', // Lighter fallback
+    model: 'gemini-2.5-flash-lite',
     apiKey: getApiKey(),
   );
 
@@ -27,12 +26,10 @@ class AIService {
     try {
       return await _withRetry(() => callGeminiMain(prompt, detailed: detailed));
     } catch (e) {
-      print("Main model failed: $e");
       try {
         return await callGeminiFallback(prompt, detailed: detailed);
       } catch (e2) {
-        print("Fallback model failed: $e2");
-        throw Exception("AI Error: ${e.toString().contains('API_KEY_INVALID') ? 'Invalid API Key' : 'Server busy, try again'}");
+        throw Exception("Server busy, try again");
       }
     }
   }
@@ -41,7 +38,7 @@ class AIService {
     int retries = 1;
     while (true) {
       try {
-        return await action().timeout(const Duration(seconds: 10)); // Increased timeout for web
+        return await action().timeout(const Duration(seconds: 5));
       } catch (e) {
         if (retries <= 0) rethrow;
         retries--;
