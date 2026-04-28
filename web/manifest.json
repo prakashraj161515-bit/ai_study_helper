@@ -1,6 +1,7 @@
 {
     "name": "Study Nova",
     "short_name": "Study Nova",
+    "lang": "en",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",

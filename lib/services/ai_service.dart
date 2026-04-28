@@ -31,8 +31,8 @@ class AIService {
   Future<String> processImage(Uint8List imageBytes, {String? prompt, bool detailed = false}) async {
     try {
       final systemPrompt = detailed 
-        ? "Analyze this image and provide a detailed explanation. Answer in the same language as detected in the image."
-        : "Extract text from this image and answer the question or summarize it clearly. Answer in the same language as detected in the image.";
+        ? "Analyze this image and provide a detailed explanation. Always answer in English."
+        : "Extract text from this image and answer the question or summarize it clearly. Always answer in English.";
       
       final content = [
         Content.multi([
@@ -68,8 +68,8 @@ class AIService {
     bool detailed = false,
   }) async {
     final systemPrompt = detailed 
-      ? "Provide a detailed explanation. Answer in the same language as the question."
-      : "Keep answer short and clear. No unnecessary explanation. Answer in the same language as the question.";
+      ? "Provide a detailed explanation. Always answer in English."
+      : "Keep answer short and clear. No unnecessary explanation. Always answer in English.";
     
     final content = [Content.text("$systemPrompt\n\nQuestion: $prompt")];
     final response = await model.generateContent(content);
@@ -86,7 +86,7 @@ class AIService {
       - "correctIndex": integer (0-3)
       - "explanation": string
       Rules: Short questions, 4 options, 1 correct answer.
-      Answer in the same language as the topic.
+      Always answer in English.
     """;
 
     final content = [Content.text(prompt)];
