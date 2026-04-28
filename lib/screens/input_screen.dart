@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../services/ocr_service.dart';
 import 'result_screen.dart';
 
@@ -20,8 +21,10 @@ class _InputScreenState extends State<InputScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final OCRService _ocr = OCRService();
+  final stt.SpeechToText _speech = stt.SpeechToText();
   
   bool _isLoading = false;
+  bool _isListening = false;
 
   @override
   void initState() {
@@ -33,7 +36,36 @@ class _InputScreenState extends State<InputScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.mode == InputMode.scan) _pickImage(ImageSource.camera);
       if (widget.mode == InputMode.upload) _pickImage(ImageSource.gallery);
+      if (widget.mode == InputMode.voice) _startListening();
     });
+  }
+
+  void _startListening() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) {
+          if (val == 'done') {
+            setState(() => _isListening = false);
+          }
+        },
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            setState(() {
+              _controller.text = val.recognizedWords;
+            });
+          },
+        );
+      } else {
+        _showError("Speech recognition not available on this device/browser.");
+      }
+    } else {
+      _speech.stop();
+      setState(() => _isListening = false);
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -87,7 +119,17 @@ class _InputScreenState extends State<InputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.mode.name.toUpperCase())),
+      appBar: AppBar(
+        title: Text(widget.mode.name.toUpperCase()),
+        actions: widget.mode == InputMode.voice
+            ? [
+                IconButton(
+                  icon: Icon(_isListening ? CupertinoIcons.mic_solid : CupertinoIcons.mic, color: _isListening ? Colors.red : null),
+                  onPressed: _startListening,
+                ),
+              ]
+            : null,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
