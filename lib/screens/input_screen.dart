@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import '../services/speech_service.dart';
 import '../services/ocr_service.dart';
 import 'result_screen.dart';
 
@@ -21,79 +21,47 @@ class _InputScreenState extends State<InputScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final OCRService _ocr = OCRService();
-  final stt.SpeechToText _speech = stt.SpeechToText();
   
   bool _isLoading = false;
   bool _isListening = false;
-  String _lastRecognizedWords = "";
-
-  bool _speechInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _initSpeech();
-  }
-
-  void _initSpeech() async {
-    _speechInitialized = await _speech.initialize(
-      onStatus: (val) {
-        if (val == 'done' || val == 'notListening') {
-          if (mounted) setState(() => _isListening = false);
-        }
-      },
-      onError: (val) {
-        print('onError: $val');
-        if (mounted) setState(() => _isListening = false);
-      },
-    );
-    if (mounted) {
-      _handleInitialMode();
-    }
+    _handleInitialMode();
   }
 
   void _handleInitialMode() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.mode == InputMode.scan) _pickImage(ImageSource.camera);
       if (widget.mode == InputMode.upload) _pickImage(ImageSource.gallery);
-      if (widget.mode == InputMode.voice && _speechInitialized) _toggleListening();
+      if (widget.mode == InputMode.voice) _toggleListening();
     });
   }
 
   void _toggleListening() {
-    if (!_speechInitialized) {
-      _showError("Speech recognition not available on this device/browser.");
-      return;
-    }
-
     if (_isListening) {
-      _speech.stop();
+      NativeSpeech.stop();
       setState(() => _isListening = false);
       return;
     }
 
-    _speech.cancel(); // Clear any previous active session
-    setState(() {
-      _isListening = true;
-      _lastRecognizedWords = ""; // Reset for new session
+    setState(() => _isListening = true);
+
+    NativeSpeech.start((text, isFinal) {
+      if (mounted) {
+        setState(() {
+          _controller.text = text;
+        });
+      }
+      
+      if (isFinal) {
+        NativeSpeech.stop();
+        if (mounted) setState(() => _isListening = false);
+      }
+    }, () {
+      if (mounted) setState(() => _isListening = false);
     });
-
-    _speech.listen(
-      listenMode: stt.ListenMode.dictation,
-      onResult: (val) {
-        if (val.recognizedWords != _lastRecognizedWords) {
-          setState(() {
-            _controller.text = val.recognizedWords;
-            _lastRecognizedWords = val.recognizedWords;
-          });
-        }
-
-        if (val.finalResult) {
-          _speech.stop();
-          if (mounted) setState(() => _isListening = false);
-        }
-      },
-    );
   }
 
   Future<void> _pickImage(ImageSource source) async {

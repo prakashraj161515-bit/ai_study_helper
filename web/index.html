@@ -42,5 +42,50 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    let recognitionState = "idle";
+    let recognition = null;
+    
+    // Check if SpeechRecognition is supported
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        // Extract exact transcript like user requested
+        const transcript = event.results[0][0].transcript;
+        if (window.onSpeechResult) {
+          window.onSpeechResult(transcript, event.results[0].isFinal);
+        }
+      };
+
+      recognition.onend = () => {
+        recognitionState = "idle";
+        if (window.onSpeechEnd) {
+          window.onSpeechEnd();
+        }
+      };
+    }
+
+    window.startSpeech = function() {
+      if (!recognition) return false;
+      if (recognitionState !== "idle") {
+        recognition.abort();
+      }
+      recognitionState = "listening";
+      recognition.start();
+      return true;
+    };
+
+    window.stopSpeech = function() {
+      if (recognition && recognitionState !== "idle") {
+        recognition.stop();
+        recognitionState = "idle";
+      }
+    };
+  </script>
 </body>
 </html>
