@@ -25,6 +25,7 @@ class _InputScreenState extends State<InputScreen> {
   
   bool _isLoading = false;
   bool _isListening = false;
+  String _lastRecognizedWords = "";
 
   @override
   void initState() {
@@ -47,34 +48,39 @@ class _InputScreenState extends State<InputScreen> {
       return;
     }
 
-    setState(() => _isListening = true); // Set immediately to prevent double taps
+    setState(() => _isListening = true);
 
     bool available = await _speech.initialize(
       onStatus: (val) {
         if (val == 'done' || val == 'notListening') {
-          setState(() => _isListening = false);
+          if (mounted) setState(() => _isListening = false);
         }
       },
       onError: (val) {
         print('onError: $val');
-        setState(() => _isListening = false);
+        if (mounted) setState(() => _isListening = false);
       },
     );
     
     if (available) {
-      // Save the current text so we can append to it
-      final currentText = _controller.text;
-        
         _speech.listen(
           listenMode: stt.ListenMode.dictation,
           onResult: (val) {
+            // Rule 1: Use only finalResult, ignore interim results
+            if (!val.finalResult) return;
+            
+            // Rule 5: Check previous text to avoid duplicates
+            if (val.recognizedWords == _lastRecognizedWords) return;
+            
             setState(() {
-              if (currentText.isEmpty) {
-                _controller.text = val.recognizedWords;
-              } else {
-                _controller.text = '$currentText ${val.recognizedWords}';
-              }
+              // Rule 2: Replace text, don't append
+              _controller.text = val.recognizedWords;
+              _lastRecognizedWords = val.recognizedWords;
             });
+
+            // Rule 4: Stop listening immediately after completing
+            _speech.stop();
+            setState(() => _isListening = false);
           },
         );
       } else {
