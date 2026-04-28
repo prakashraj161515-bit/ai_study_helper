@@ -117,3 +117,42 @@ class UserProgress {
     );
   }
 }
+
+class Marksheet {
+  final String id;
+  final String topic;
+  final int score;
+  final int total;
+  final DateTime timestamp;
+
+  Marksheet({
+    required this.id,
+    required this.topic,
+    required this.score,
+    required this.total,
+    required this.timestamp,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'topic': topic,
+      'score': score,
+      'total': total,
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
+
+  factory Marksheet.fromMap(Map<String, dynamic> map) {
+    return Marksheet(
+      id: map['id'],
+      topic: map['topic'],
+      score: map['score'],
+      total: map['total'],
+      timestamp: DateTime.parse(map['timestamp']),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+  factory Marksheet.fromJson(String source) => Marksheet.fromMap(json.decode(source));
+}

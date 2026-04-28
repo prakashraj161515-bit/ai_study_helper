@@ -16,6 +16,7 @@ class AppState extends ChangeNotifier {
   bool _isOffline = false;
   String? _userName;
   String? _userPhoto;
+  List<Marksheet> _marksheets = [];
 
   bool get isPremium => _isPremium;
   UserProgress get progress => _progress;
@@ -25,6 +26,7 @@ class AppState extends ChangeNotifier {
   bool get isOffline => _isOffline;
   String? get userName => _userName;
   String? get userPhoto => _userPhoto;
+  List<Marksheet> get marksheets => _marksheets;
 
   AppState() {
     _loadInitialData();
@@ -45,6 +47,7 @@ class AppState extends ChangeNotifier {
     _dailyCount = await _storage.getDailyQuestionCount();
     _userName = await _storage.getUserName();
     _userPhoto = await _storage.getUserPhoto();
+    _marksheets = await _storage.getMarksheets();
     notifyListeners();
   }
 
@@ -98,6 +101,24 @@ class AppState extends ChangeNotifier {
       await _storage.updateStreakAndCount(i < correctCount);
     }
     _progress = await _storage.getProgress();
+    notifyListeners();
+  }
+
+  Future<void> saveMarksheet(String topic, int score, int total) async {
+    final item = Marksheet(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      topic: topic,
+      score: score,
+      total: total,
+      timestamp: DateTime.now(),
+    );
+
+    _marksheets.insert(0, item);
+    if (!_isPremium && _marksheets.length > 5) {
+      _marksheets.removeLast();
+    }
+    
+    await _storage.saveMarksheet(item, maxItems: _isPremium ? 1000 : 5);
     notifyListeners();
   }
 }

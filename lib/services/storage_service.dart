@@ -10,6 +10,7 @@ class StorageService {
   static const String _keyLastQuestionDate = 'last_question_date';
   static const String _keyUserName = 'user_name';
   static const String _keyUserPhoto = 'user_photo';
+  static const String _keyMarksheets = 'marksheets';
 
   Future<String?> getUserName() async {
     final prefs = await SharedPreferences.getInstance();
@@ -121,5 +122,24 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = await getDailyQuestionCount();
     await prefs.setInt(_keyDailyCount, current + 1);
+  }
+
+  Future<void> saveMarksheet(Marksheet item, {int maxItems = 5}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final marksheets = await getMarksheets();
+    marksheets.insert(0, item);
+    
+    if (marksheets.length > maxItems && !(await isPremium())) {
+      marksheets.removeRange(maxItems, marksheets.length);
+    }
+    
+    final data = marksheets.map((e) => e.toJson()).toList();
+    await prefs.setStringList(_keyMarksheets, data);
+  }
+
+  Future<List<Marksheet>> getMarksheets() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getStringList(_keyMarksheets) ?? [];
+    return data.map((e) => Marksheet.fromJson(e)).toList();
   }
 }

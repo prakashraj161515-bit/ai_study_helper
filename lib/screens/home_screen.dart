@@ -8,6 +8,7 @@ import 'history_screen.dart';
 import 'progress_screen.dart';
 import 'premium_screen.dart';
 import 'profile_screen.dart';
+import 'marksheet_history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -113,6 +114,13 @@ class HomeScreen extends StatelessWidget {
                   CupertinoIcons.graph_square_fill,
                   Colors.teal,
                   () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen())),
+                ),
+                _buildActionCard(
+                  context,
+                  'Marksheets',
+                  CupertinoIcons.doc_plaintext,
+                  Colors.indigo,
+                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MarksheetHistoryScreen())),
                 ),
               ],
             ),

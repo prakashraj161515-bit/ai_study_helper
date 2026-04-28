@@ -25,8 +25,19 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _showResult = false;
   bool _showSettings = true;
 
-  int _selectedCount = 3;
+  int _selectedCount = 4;
   String _selectedDifficulty = 'easy';
+
+  @override
+  void initState() {
+    super.initState();
+    final state = Provider.of<AppState>(context, listen: false);
+    if (state.isPremium) {
+      _selectedCount = 5;
+    } else {
+      _selectedCount = 4;
+    }
+  }
 
   Future<void> _fetchQuestions() async {
     setState(() {
@@ -78,7 +89,9 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     } else {
       setState(() => _showResult = true);
-      Provider.of<AppState>(context, listen: false).updateQuizResult(_score, _questions.length);
+      final state = Provider.of<AppState>(context, listen: false);
+      state.updateQuizResult(_score, _questions.length);
+      state.saveMarksheet(widget.topic, _score, _questions.length);
     }
   }
 
@@ -190,11 +203,24 @@ class _QuizScreenState extends State<QuizScreen> {
           children: [
             const Text('Questions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Wrap(spacing: 8, children: [3, 5, 10].map((c) => ChoiceChip(
-              label: Text('$c'), 
-              selected: _selectedCount == c,
-              onSelected: (s) => setState(() => _selectedCount = c),
-            )).toList()),
+            if (!state.isPremium)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+                child: const Row(
+                  children: [
+                    Icon(Icons.lock_outline, size: 16, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('4 Questions (Free Version)', style: TextStyle(color: Colors.black87)),
+                  ],
+                ),
+              )
+            else
+              Wrap(spacing: 8, children: [5, 10, 15].map((c) => ChoiceChip(
+                label: Text('$c'), 
+                selected: _selectedCount == c,
+                onSelected: (s) => setState(() => _selectedCount = c),
+              )).toList()),
             const SizedBox(height: 24),
             const Text('Difficulty', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
@@ -232,7 +258,7 @@ class _QuizScreenState extends State<QuizScreen> {
             _buildResultAction('Download Marksheet', CupertinoIcons.cloud_download_fill, Colors.green, () {
                final state = Provider.of<AppState>(context, listen: false);
                if (!state.isPremium) {
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Premium feature locked.")));
+                 _showPremiumDialog();
                } else {
                  PDFService().generateMarksheet(_score, _questions.length, widget.topic);
                }
@@ -256,6 +282,26 @@ class _QuizScreenState extends State<QuizScreen> {
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
       trailing: const Icon(CupertinoIcons.chevron_right, size: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey[300]!)),
+    );
+  }
+
+  void _showPremiumDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Upgrade to Premium'),
+        content: const Text('Download marksheet feature is only available for premium users. You can also save unlimited marksheets and share them!'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Maybe Later')),
+          ElevatedButton(
+            onPressed: () {
+              Provider.of<AppState>(context, listen: false).togglePremium();
+              Navigator.pop(context);
+            },
+            child: const Text('Upgrade Now'),
+          ),
+        ],
+      ),
     );
   }
 }
