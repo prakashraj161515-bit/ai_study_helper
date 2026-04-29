@@ -32,11 +32,22 @@ class HomeScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        state.userName != null && state.userName!.isNotEmpty 
-                            ? 'Hi ${state.userName} 👋' 
-                            : 'Hi Student 👋',
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                      Row(
+                        children: [
+                          Text(
+                            state.userName != null && state.userName!.isNotEmpty 
+                                ? 'Hi ${state.userName}' 
+                                : 'Hi Student',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                          ),
+                          if (state.isPremium) ...[
+                            const SizedBox(width: 6),
+                            const Icon(CupertinoIcons.star_fill, color: Colors.amber, size: 20),
+                          ] else ...[
+                             const SizedBox(width: 6),
+                             const Text('👋', style: TextStyle(fontSize: 24)),
+                          ],
+                        ],
                       ),
                       Text(
                         "Let's study smarter today!",
@@ -69,22 +80,33 @@ class HomeScreen extends StatelessWidget {
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
                     child: Hero(
                       tag: 'profile_avatar',
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.2), width: 2),
-                        ),
-                        child: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                          backgroundImage: state.userPhoto != null 
-                              ? MemoryImage(base64Decode(state.userPhoto!)) 
-                              : null,
-                          child: state.userPhoto == null 
-                              ? Icon(CupertinoIcons.person_fill, color: Theme.of(context).primaryColor)
-                              : null,
-                        ),
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.2), width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                              backgroundImage: state.userPhoto != null 
+                                  ? MemoryImage(base64Decode(state.userPhoto!)) 
+                                  : null,
+                              child: state.userPhoto == null 
+                                  ? Icon(CupertinoIcons.person_fill, color: Theme.of(context).primaryColor)
+                                  : null,
+                            ),
+                          ),
+                          if (state.isPremium)
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
+                              child: const Icon(CupertinoIcons.star_fill, color: Colors.white, size: 8),
+                            ),
+                        ],
                       ),
                     ),
                   ),
