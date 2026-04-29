@@ -19,108 +19,220 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   Offset? _startPoint;
   bool _isProcessing = false;
 
-  final GlobalKey _imageKey = GlobalKey();
+  final GlobalKey _stackKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Select Region'),
-        actions: [
-          if (_selection != null)
-            TextButton(
-              onPressed: _isProcessing ? null : _cropAndReturn,
-              child: _isProcessing
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Crop & Read', style: TextStyle(color: Colors.white)),
-            ),
-        ],
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Select Region to Scan',
+          style: TextStyle(color: Colors.white, fontSize: 16),
+        ),
       ),
-      body: Center(
-        child: GestureDetector(
-          onPanStart: (details) {
-            setState(() {
-              _startPoint = details.localPosition;
-              _selection = Rect.fromPoints(_startPoint!, _startPoint!);
-            });
-          },
-          onPanUpdate: (details) {
-            setState(() {
-              _selection = Rect.fromPoints(_startPoint!, details.localPosition);
-            });
-          },
-          onPanEnd: (details) {
-            _startPoint = null;
-          },
-          child: Stack(
-            fit: StackFit.expand,
+      body: Stack(
+        children: [
+          // Main content
+          Column(
             children: [
-              Image.file(
-                File(widget.imagePath),
-                key: _imageKey,
-                fit: BoxFit.contain,
-              ),
-              if (_selection != null)
-                CustomPaint(
-                  painter: SelectionPainter(selection: _selection!),
+              Expanded(
+                child: GestureDetector(
+                  onPanStart: (details) {
+                    setState(() {
+                      _startPoint = details.localPosition;
+                      _selection = Rect.fromPoints(_startPoint!, _startPoint!);
+                    });
+                  },
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _selection =
+                          Rect.fromPoints(_startPoint!, details.localPosition);
+                    });
+                  },
+                  onPanEnd: (_) {
+                    _startPoint = null;
+                  },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Stack(
+                        key: _stackKey,
+                        fit: StackFit.expand,
+                        children: [
+                          // Image
+                          Image.file(
+                            File(widget.imagePath),
+                            fit: BoxFit.contain,
+                          ),
+
+                          // Dark overlay — 4 Positioned containers around selection
+                          if (_selection != null) ...[
+                            // Top
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              right: 0,
+                              height: _selection!.top.clamp(0, constraints.maxHeight),
+                              child: Container(color: Colors.black54),
+                            ),
+                            // Bottom
+                            Positioned(
+                              left: 0,
+                              top: _selection!.bottom.clamp(0, constraints.maxHeight),
+                              right: 0,
+                              bottom: 0,
+                              child: Container(color: Colors.black54),
+                            ),
+                            // Left
+                            Positioned(
+                              left: 0,
+                              top: _selection!.top.clamp(0, constraints.maxHeight),
+                              width: _selection!.left.clamp(0, constraints.maxWidth),
+                              height: _selection!.height.abs(),
+                              child: Container(color: Colors.black54),
+                            ),
+                            // Right
+                            Positioned(
+                              left: _selection!.right.clamp(0, constraints.maxWidth),
+                              top: _selection!.top.clamp(0, constraints.maxHeight),
+                              right: 0,
+                              height: _selection!.height.abs(),
+                              child: Container(color: Colors.black54),
+                            ),
+
+                            // Selection border
+                            Positioned(
+                              left: _selection!.left,
+                              top: _selection!.top,
+                              width: _selection!.width.abs(),
+                              height: _selection!.height.abs(),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.blue,
+                                    width: 2.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
                 ),
+              ),
             ],
           ),
-        ),
+
+          // Floating Submit Button — only shown when area is selected
+          if (_selection != null && !_isProcessing)
+            Positioned(
+              bottom: 30,
+              left: 40,
+              right: 40,
+              child: ElevatedButton.icon(
+                onPressed: _cropAndReturn,
+                icon: const Icon(Icons.crop, color: Colors.white),
+                label: const Text(
+                  'Scan Selected Area',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 8,
+                ),
+              ),
+            ),
+
+          // Loading indicator while processing
+          if (_isProcessing)
+            Positioned(
+              bottom: 30,
+              left: 40,
+              right: 40,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Processing...',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
   Future<void> _cropAndReturn() async {
     if (_selection == null) return;
-    
-    setState(() {
-      _isProcessing = true;
-    });
+
+    setState(() => _isProcessing = true);
 
     try {
-      // Get rendered image size and position
-      final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
+      // Get the stack's render size
+      final RenderBox renderBox =
+          _stackKey.currentContext!.findRenderObject() as RenderBox;
       final viewSize = renderBox.size;
-      
-      // Load original image to get its dimensions
+
+      // Load original image
       final bytes = await File(widget.imagePath).readAsBytes();
       final originalImage = img.decodeImage(bytes);
-      
-      if (originalImage == null) {
-        throw Exception("Could not decode image");
-      }
 
-      // Calculate scale and offset because of BoxFit.contain
+      if (originalImage == null) throw Exception("Could not decode image");
+
+      // Calculate BoxFit.contain scale & offset
       final double scale = min(
         viewSize.width / originalImage.width,
         viewSize.height / originalImage.height,
       );
-      
       final double drawWidth = originalImage.width * scale;
       final double drawHeight = originalImage.height * scale;
-      
       final double dx = (viewSize.width - drawWidth) / 2;
       final double dy = (viewSize.height - drawHeight) / 2;
 
-      // Adjust selection rect to image coordinates
+      // Map screen coordinates → image pixel coordinates
       final left = (_selection!.left - dx) / scale;
       final top = (_selection!.top - dy) / scale;
       final right = (_selection!.right - dx) / scale;
       final bottom = (_selection!.bottom - dy) / scale;
 
-      // Clamp to image bounds
-      final cropX = left.clamp(0, originalImage.width).toInt();
-      final cropY = top.clamp(0, originalImage.height).toInt();
-      final cropWidth = (right - left).clamp(0, originalImage.width - cropX).toInt();
-      final cropHeight = (bottom - top).clamp(0, originalImage.height - cropY).toInt();
+      final cropX = left.clamp(0.0, originalImage.width.toDouble()).toInt();
+      final cropY = top.clamp(0.0, originalImage.height.toDouble()).toInt();
+      final cropWidth =
+          (right - left).abs().clamp(1.0, (originalImage.width - cropX).toDouble()).toInt();
+      final cropHeight =
+          (bottom - top).abs().clamp(1.0, (originalImage.height - cropY).toDouble()).toInt();
 
-      if (cropWidth <= 0 || cropHeight <= 0) {
-        throw Exception("Invalid crop area");
-      }
-
-      // Perform crop
+      // Crop and save
       final cropped = img.copyCrop(
         originalImage,
         x: cropX,
@@ -129,79 +241,19 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
         height: cropHeight,
       );
 
-      // Save to temporary file
       final tempDir = await getTemporaryDirectory();
-      final targetPath = '${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      
-      final croppedBytes = img.encodeJpg(cropped);
-      await File(targetPath).writeAsBytes(croppedBytes);
+      final targetPath =
+          '${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(targetPath).writeAsBytes(img.encodeJpg(cropped));
 
-      if (mounted) {
-        Navigator.pop(context, targetPath);
-      }
+      if (mounted) Navigator.pop(context, targetPath);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error cropping image: $e')),
+          SnackBar(content: Text('Error: $e')),
         );
-        setState(() {
-          _isProcessing = false;
-        });
+        setState(() => _isProcessing = false);
       }
     }
-  }
-}
-
-class SelectionPainter extends CustomPainter {
-  final Rect selection;
-
-  SelectionPainter({required this.selection});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black54;
-
-    // Draw 4 dark rectangles around the selection (avoids Path.combine which breaks on Web)
-    // Top bar
-    canvas.drawRect(
-      Rect.fromLTRB(0, 0, size.width, selection.top),
-      paint,
-    );
-    // Bottom bar
-    canvas.drawRect(
-      Rect.fromLTRB(0, selection.bottom, size.width, size.height),
-      paint,
-    );
-    // Left bar
-    canvas.drawRect(
-      Rect.fromLTRB(0, selection.top, selection.left, selection.bottom),
-      paint,
-    );
-    // Right bar
-    canvas.drawRect(
-      Rect.fromLTRB(selection.right, selection.top, size.width, selection.bottom),
-      paint,
-    );
-
-    // Draw selection border
-    final borderPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-    canvas.drawRect(selection, borderPaint);
-
-    // Draw corner handles
-    final handlePaint = Paint()..color = Colors.blue;
-    const double handleSize = 12;
-
-    canvas.drawRect(Rect.fromCenter(center: selection.topLeft, width: handleSize, height: handleSize), handlePaint);
-    canvas.drawRect(Rect.fromCenter(center: selection.topRight, width: handleSize, height: handleSize), handlePaint);
-    canvas.drawRect(Rect.fromCenter(center: selection.bottomLeft, width: handleSize, height: handleSize), handlePaint);
-    canvas.drawRect(Rect.fromCenter(center: selection.bottomRight, width: handleSize, height: handleSize), handlePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant SelectionPainter oldDelegate) {
-    return oldDelegate.selection != selection;
   }
 }
