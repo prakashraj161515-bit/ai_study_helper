@@ -164,3 +164,70 @@ class Marksheet {
   String toJson() => json.encode(toMap());
   factory Marksheet.fromJson(String source) => Marksheet.fromMap(json.decode(source));
 }
+class StudyPlan {
+  final String id;
+  final String subject;
+  final String time;
+  final String topic;
+  bool isCompleted;
+
+  StudyPlan({
+    required this.id,
+    required this.subject,
+    required this.time,
+    required this.topic,
+    this.isCompleted = false,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'subject': subject,
+      'time': time,
+      'topic': topic,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory StudyPlan.fromMap(Map<String, dynamic> map) {
+    return StudyPlan(
+      id: map['id'],
+      subject: map['subject'],
+      time: map['time'],
+      topic: map['topic'],
+      isCompleted: map['isCompleted'] ?? false,
+    );
+  }
+}
+
+class Reminder {
+  final String id;
+  final String title;
+  final String time;
+  bool isActive;
+
+  Reminder({
+    required this.id,
+    required this.title,
+    required this.time,
+    this.isActive = true,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'time': time,
+      'isActive': isActive,
+    };
+  }
+
+  factory Reminder.fromMap(Map<String, dynamic> map) {
+    return Reminder(
+      id: map['id'],
+      title: map['title'],
+      time: map['time'],
+      isActive: map['isActive'] ?? true,
+    );
+  }
+}

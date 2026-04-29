@@ -12,6 +12,32 @@ class StorageService {
   static const String _keyUserPhoto = 'user_photo';
   static const String _keyMarksheets = 'marksheets';
   static const String _keyDarkMode = 'is_dark_mode';
+  static const String _keyStudyPlans = 'study_plans';
+  static const String _keyReminders = 'reminders';
+
+  Future<List<StudyPlan>> getStudyPlans() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getStringList(_keyStudyPlans) ?? [];
+    return data.map((e) => StudyPlan.fromMap(jsonDecode(e))).toList();
+  }
+
+  Future<void> saveStudyPlans(List<StudyPlan> plans) async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = plans.map((e) => jsonEncode(e.toMap())).toList();
+    await prefs.setStringList(_keyStudyPlans, data);
+  }
+
+  Future<List<Reminder>> getReminders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getStringList(_keyReminders) ?? [];
+    return data.map((e) => Reminder.fromMap(jsonDecode(e))).toList();
+  }
+
+  Future<void> saveReminders(List<Reminder> reminders) async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = reminders.map((e) => jsonEncode(e.toMap())).toList();
+    await prefs.setStringList(_keyReminders, data);
+  }
 
   Future<bool> getDarkMode() async {
     final prefs = await SharedPreferences.getInstance();

@@ -19,8 +19,13 @@ class AppState extends ChangeNotifier {
   String? _userPhoto;
   List<Marksheet> _marksheets = [];
 
+  List<StudyPlan> _studyPlans = [];
+  List<Reminder> _reminders = [];
+
   bool get isPremium => _isPremium;
   bool get isDarkMode => _isDarkMode;
+  List<StudyPlan> get studyPlans => _studyPlans;
+  List<Reminder> get reminders => _reminders;
   UserProgress get progress => _progress;
   List<StudyHistoryItem> get history => _history;
   int get dailyCount => _dailyCount;
@@ -51,6 +56,50 @@ class AppState extends ChangeNotifier {
     _userName = await _storage.getUserName();
     _userPhoto = await _storage.getUserPhoto();
     _marksheets = await _storage.getMarksheets();
+    _studyPlans = await _storage.getStudyPlans();
+    _reminders = await _storage.getReminders();
+    notifyListeners();
+  }
+
+  Future<void> addStudyPlan(StudyPlan plan) async {
+    _studyPlans.add(plan);
+    await _storage.saveStudyPlans(_studyPlans);
+    notifyListeners();
+  }
+
+  Future<void> updateStudyPlan(StudyPlan plan) async {
+    final index = _studyPlans.indexWhere((e) => e.id == plan.id);
+    if (index != -1) {
+      _studyPlans[index] = plan;
+      await _storage.saveStudyPlans(_studyPlans);
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeStudyPlan(String id) async {
+    _studyPlans.removeWhere((e) => e.id == id);
+    await _storage.saveStudyPlans(_studyPlans);
+    notifyListeners();
+  }
+
+  Future<void> addReminder(Reminder reminder) async {
+    _reminders.add(reminder);
+    await _storage.saveReminders(_reminders);
+    notifyListeners();
+  }
+
+  Future<void> updateReminder(Reminder reminder) async {
+    final index = _reminders.indexWhere((e) => e.id == reminder.id);
+    if (index != -1) {
+      _reminders[index] = reminder;
+      await _storage.saveReminders(_reminders);
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeReminder(String id) async {
+    _reminders.removeWhere((e) => e.id == id);
+    await _storage.saveReminders(_reminders);
     notifyListeners();
   }
 

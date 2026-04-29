@@ -2,10 +2,10 @@ Compiling lib/main.dart for the Web...
 Wasm dry run succeeded. Consider building and testing your application with the `--wasm` flag. See docs for more info: https://docs.flutter.dev/platform-integration/web/wasm
 Use --no-wasm-dry-run to disable these warnings.
 Target dart2js failed: ProcessException: Process exited abnormally with exit code 1:
-lib/screens/home_screen.dart:190:91:
-Error: Not a constant expression.
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen())),
-                                                                                          ^^^^^^^^^^^^^^
+lib/screens/study_plan_screen.dart:71:49:
+Error: Member not found: 'check_mark_circled_fill'.
+              plan.isCompleted ? CupertinoIcons.check_mark_circled_fill : CupertinoIcons.circle,
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
 Error: Compilation failed.
   Command: /Users/anrudhkumar/Downloads/flutter/bin/cache/dart-sdk/bin/dart compile js --platform-binaries=/Users/anrudhkumar/Downloads/flutter/bin/cache/flutter_web_sdk/kernel --invoker=flutter_tool -Ddart.vm.product=true -DFLUTTER_VERSION=3.41.7 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=cc0734ac71 -DFLUTTER_ENGINE_REVISION=59aa584fdf -DFLUTTER_DART_VERSION=3.11.5 -DFLUTTER_WEB_USE_SKIA=true -DFLUTTER_WEB_USE_SKWASM=false -DFLUTTER_WEB_CANVASKIT_URL=https://www.gstatic.com/flutter-canvaskit/59aa584fdf100e6c78c785d8a5b565d1de4b48ab/ --native-null-assertions --no-source-maps -O4 --minify -o /Users/anrudhkumar/.gemini/antigravity/scratch/ai_study_helper/.dart_tool/flutter_build/0171d18c0fba7075c266c8bc663998ac/app.dill --packages=/Users/anrudhkumar/.gemini/antigravity/scratch/ai_study_helper/.dart_tool/package_config.json --cfe-only /Users/anrudhkumar/.gemini/antigravity/scratch/ai_study_helper/.dart_tool/flutter_build/0171d18c0fba7075c266c8bc663998ac/main.dart
 #0      RunResult.throwException (package:flutter_tools/src/base/process.dart:153:5)
@@ -50,5 +50,5 @@ Error: Compilation failed.
 #20     main (package:flutter_tools/executable.dart:103:3)
 <asynchronous suspension>
 
-Compiling lib/main.dart for the Web...                             17.7s
+Compiling lib/main.dart for the Web...                             16.8s
 Error: Failed to compile application for the Web.
