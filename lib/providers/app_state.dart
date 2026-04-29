@@ -9,7 +9,7 @@ class AppState extends ChangeNotifier {
   final AIService _ai = AIService();
   final Connectivity _connectivity = Connectivity();
 
-  bool _isPremium = true;
+  bool _isPremium = false;
   UserProgress _progress = UserProgress();
   List<StudyHistoryItem> _history = [];
   int _dailyCount = 0;
@@ -18,11 +18,11 @@ class AppState extends ChangeNotifier {
   String? _userPhoto;
   List<Marksheet> _marksheets = [];
 
-  bool get isPremium => true;
+  bool get isPremium => _isPremium;
   UserProgress get progress => _progress;
   List<StudyHistoryItem> get history => _history;
   int get dailyCount => _dailyCount;
-  bool get canAskQuestion => true;
+  bool get canAskQuestion => _isPremium || _dailyCount < 15;
   bool get isOffline => _isOffline;
   String? get userName => _userName;
   String? get userPhoto => _userPhoto;
@@ -41,7 +41,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _loadInitialData() async {
-    _isPremium = true; // Always premium
+    _isPremium = await _storage.isPremium();
     _progress = await _storage.getProgress();
     _history = await _storage.getHistory();
     _dailyCount = await _storage.getDailyQuestionCount();
@@ -63,12 +63,16 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> togglePremium() async {
-    // No-op or keep for UI consistency but effectively does nothing
+    _isPremium = !_isPremium;
+    await _storage.setPremium(_isPremium);
     notifyListeners();
   }
 
   Future<String> askQuestion(String prompt, {bool detailed = false}) async {
-    // Unlimited questions
+    if (!canAskQuestion) {
+      throw Exception("Daily limit reached. Upgrade to Premium for unlimited questions!");
+    }
+
     final answer = await _ai.askQuestion(prompt, detailed: detailed);
     
     final item = StudyHistoryItem(
@@ -80,8 +84,11 @@ class AppState extends ChangeNotifier {
     );
 
     _history.insert(0, item);
+    if (!_isPremium && _history.length > 20) {
+      _history.removeLast();
+    }
     
-    await _storage.saveHistoryItem(item, maxItems: 1000);
+    await _storage.saveHistoryItem(item, maxItems: _isPremium ? 1000 : 20);
     await _storage.incrementDailyCount();
     _dailyCount = await _storage.getDailyQuestionCount();
     
@@ -107,8 +114,11 @@ class AppState extends ChangeNotifier {
     );
 
     _marksheets.insert(0, item);
+    if (!_isPremium && _marksheets.length > 5) {
+      _marksheets.removeLast();
+    }
     
-    await _storage.saveMarksheet(item, maxItems: 1000);
+    await _storage.saveMarksheet(item, maxItems: _isPremium ? 1000 : 5);
     notifyListeners();
   }
 }

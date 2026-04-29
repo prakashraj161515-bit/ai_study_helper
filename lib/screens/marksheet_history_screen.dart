@@ -17,6 +17,16 @@ class MarksheetHistoryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Marksheet History'),
+        actions: [
+          if (!state.isPremium)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Chip(
+                label: const Text('Free (Last 5)', style: TextStyle(fontSize: 12, color: Colors.white)),
+                backgroundColor: Colors.orange,
+              ),
+            ),
+        ],
       ),
       body: marksheets.isEmpty
           ? _buildEmptyState()
@@ -127,9 +137,13 @@ class MarksheetHistoryScreen extends StatelessWidget {
                   context,
                   'Download',
                   CupertinoIcons.cloud_download_fill,
-                  Colors.green,
+                  isPremium ? Colors.green : Colors.grey,
                   () {
-                    PDFService().generateMarksheet(ms.score, ms.total, ms.topic);
+                    if (!isPremium) {
+                      _showPremiumDialog(context);
+                    } else {
+                      PDFService().generateMarksheet(ms.score, ms.total, ms.topic);
+                    }
                   },
                 ),
               ],
@@ -163,5 +177,25 @@ class MarksheetHistoryScreen extends StatelessWidget {
     if (percentage >= 80) return 'Excellent';
     if (percentage >= 50) return 'Good';
     return 'Need Improvement';
+  }
+
+  void _showPremiumDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Upgrade to Premium'),
+        content: const Text('Download marksheet feature is only available for premium users. Free users can only save the last 5 marksheets.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Maybe Later')),
+          ElevatedButton(
+            onPressed: () {
+              Provider.of<AppState>(context, listen: false).togglePremium();
+              Navigator.pop(context);
+            },
+            child: const Text('Upgrade Now'),
+          ),
+        ],
+      ),
+    );
   }
 }

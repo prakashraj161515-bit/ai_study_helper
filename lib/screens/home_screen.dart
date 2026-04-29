@@ -19,6 +19,19 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Study Nova'),
+        actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PremiumScreen()),
+            ),
+            icon: const Icon(CupertinoIcons.star_fill, size: 20, color: Colors.amber),
+            label: const Text(
+              'Premium',
+              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -153,8 +166,8 @@ class HomeScreen extends StatelessWidget {
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Unlimited Plan Active',
-                      style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold),
+                      state.isPremium ? 'Premium Plan Active' : 'Free Plan: ${15 - state.dailyCount} questions left',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
                 ),
