@@ -1,193 +1,128 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:speech_to_text/speech_to_text.dart';
-
-import '../models/question_model.dart';
-import '../services/ai_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_state.dart';
+import '../services/speech_service.dart';
 import '../services/ocr_service.dart';
 import 'image_crop_screen.dart';
 import 'result_screen.dart';
 
-class InputScreen extends StatefulWidget {
-  const InputScreen({
-    super.key,
-    required this.initialMode,
-  });
+enum InputMode { scan, upload, text, voice }
 
-  final InputMode initialMode;
+class InputScreen extends StatefulWidget {
+  final InputMode mode;
+  const InputScreen({super.key, required this.mode});
 
   @override
   State<InputScreen> createState() => _InputScreenState();
 }
 
 class _InputScreenState extends State<InputScreen> {
-  final TextEditingController _textController = TextEditingController();
-  final ImagePicker _imagePicker = ImagePicker();
-  final SpeechToText _speechToText = SpeechToText();
-
+  final TextEditingController _controller = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  final OCRService _ocr = OCRService();
+  
   bool _isLoading = false;
   bool _isListening = false;
-  String? _statusMessage;
-  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _handleInitialMode();
+  }
+
+  void _handleInitialMode() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _handleInitialMode();
+      if (widget.mode == InputMode.scan) _pickImage(ImageSource.camera);
+      if (widget.mode == InputMode.upload) _pickImage(ImageSource.gallery);
+      if (widget.mode == InputMode.voice) _toggleListening();
     });
   }
 
-  @override
-  void dispose() {
-    _speechToText.stop();
-    _textController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleInitialMode() async {
-    switch (widget.initialMode) {
-      case InputMode.camera:
-        await _pickAndReadImage(ImageSource.camera);
-        break;
-      case InputMode.gallery:
-        await _pickAndReadImage(ImageSource.gallery);
-        break;
-      case InputMode.voice:
-        await _startVoiceInput();
-        break;
-      case InputMode.text:
-        break;
-    }
-  }
-
-  Future<void> _pickAndReadImage(ImageSource source) async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _statusMessage = 'Reading image...';
-        _errorMessage = null;
-      });
-
-      final XFile? file = await _imagePicker.pickImage(source: source);
-      if (file == null) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = null;
-        });
-        return;
-      }
-
-      if (!mounted) return;
-
-      final croppedPath = await Navigator.push<String?>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImageCropScreen(imagePath: file.path),
-        ),
-      );
-
-      if (croppedPath == null) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = null;
-        });
-        return;
-      }
-
-      final extractedText = await OcrService.instance.extractText(croppedPath);
-      _textController.text = extractedText;
-
-      setState(() {
-        _isLoading = false;
-        _statusMessage = extractedText.isEmpty ? 'No text found' : 'Text ready';
-      });
-    } catch (_) {
-      setState(() {
-        _isLoading = false;
-        _statusMessage = null;
-        _errorMessage = 'Could not read the image';
-      });
-    }
-  }
-
-  Future<void> _startVoiceInput() async {
-    final available = await _speechToText.initialize();
-    if (!available) {
-      setState(() {
-        _errorMessage = 'Voice input is not available';
-      });
+  void _toggleListening() {
+    if (_isListening) {
+      NativeSpeech.stop();
+      setState(() => _isListening = false);
       return;
     }
 
-    setState(() {
-      _isListening = true;
-      _errorMessage = null;
-    });
+    setState(() => _isListening = true);
 
-    await _speechToText.listen(
-      onResult: (result) {
-        setState(() {
-          _textController.text = result.recognizedWords;
-        });
-      },
-    );
-  }
-
-  Future<void> _stopVoiceInput() async {
-    await _speechToText.stop();
-    setState(() {
-      _isListening = false;
-    });
-  }
-
-  Future<void> _solveQuestion() async {
-    final question = _textController.text.trim();
-    if (question.isEmpty) {
-      setState(() {
-        _errorMessage = 'Enter a question first';
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _statusMessage = 'Getting answer...';
-    });
-
-    try {
-      final result = await AiService.instance.solveQuestion(question);
-      if (!mounted) {
-        return;
-      }
-
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => ResultScreen(
-            question: question,
-            initialResult: result,
-          ),
-        ),
-      );
-    } on StudyException catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _errorMessage = error.message;
-      });
-    } catch (_) {
-      setState(() {
-        _errorMessage = 'Server busy, please try again';
-      });
-    } finally {
+    NativeSpeech.start((text, isFinal) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _statusMessage = null;
+          _controller.text = text;
         });
+      }
+      
+      if (isFinal) {
+        NativeSpeech.stop();
+        if (mounted) setState(() => _isListening = false);
+      }
+    }, () {
+      if (mounted) setState(() => _isListening = false);
+    });
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
+    if (image == null) return;
+
+    if (!mounted) return;
+
+    // Navigate to crop screen
+    final croppedPath = await Navigator.push<String?>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageCropScreen(imagePath: image.path),
+      ),
+    );
+
+    if (croppedPath == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // Create a fake XFile from the cropped path for OCRService
+      final croppedFile = XFile(croppedPath);
+      final text = await _ocr.recognizeText(croppedFile);
+      setState(() {
+        _controller.text = text;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError("Processing Failed: $e");
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _submit() async {
+    if (_controller.text.trim().isEmpty) return;
+    
+    setState(() => _isLoading = true);
+    try {
+      final state = Provider.of<AppState>(context, listen: false);
+      final answer = await state.askQuestion(_controller.text);
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ResultScreen(
+              question: _controller.text,
+              answer: answer,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showError(e.toString());
       }
     }
   }
@@ -196,101 +131,69 @@ class _InputScreenState extends State<InputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Input'),
+        title: Text(widget.mode.name.toUpperCase()),
+        actions: widget.mode == InputMode.voice
+            ? [
+                IconButton(
+                  icon: Icon(_isListening ? CupertinoIcons.mic_solid : CupertinoIcons.mic, color: _isListening ? Colors.red : null),
+                  onPressed: _toggleListening,
+                ),
+              ]
+            : null,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isLoading
-                        ? null
-                        : () => _pickAndReadImage(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt_outlined),
-                    label: const Text('Scan'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isLoading
-                        ? null
-                        : () => _pickAndReadImage(ImageSource.gallery),
-                    icon: const Icon(Icons.upload_file_outlined),
-                    label: const Text('Upload'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isListening ? _stopVoiceInput : _startVoiceInput,
-                    icon: Icon(
-                      _isListening ? Icons.mic_off_outlined : Icons.mic_none,
-                    ),
-                    label: Text(_isListening ? 'Stop Voice' : 'Voice Input'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+          children: [
             Expanded(
-              child: TextField(
-                controller: _textController,
-                maxLines: null,
-                expands: true,
-                decoration: const InputDecoration(
-                  hintText: 'Type or paste your question here',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _controller,
+                    maxLines: null,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter or paste your study question here...',
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            if (_statusMessage != null)
-              Text(
-                _statusMessage!,
-                style: TextStyle(color: Colors.grey.shade700),
-              ),
-            if (_errorMessage != null) ...<Widget>[
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-              if (!_isLoading)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: _solveQuestion,
-                    child: const Text('Retry'),
-                  ),
-                ),
-            ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             SizedBox(
-              height: 52,
-              child: FilledButton(
-                onPressed: _isLoading ? null : _solveQuestion,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Solve'),
+              width: double.infinity,
+              height: 56,
+              child: Consumer<AppState>(
+                builder: (context, state, child) {
+                  final bool isOffline = state.isOffline;
+                  return ElevatedButton(
+                    onPressed: (_isLoading || isOffline) ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isOffline ? Colors.grey : Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: _isLoading 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          isOffline ? 'No Internet' : 'Ask AI',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _ocr.dispose();
+    super.dispose();
   }
 }
