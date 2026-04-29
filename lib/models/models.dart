@@ -124,6 +124,8 @@ class Marksheet {
   final int score;
   final int total;
   final DateTime timestamp;
+  final List<dynamic> questions;
+  final List<int?> userAnswers;
 
   Marksheet({
     required this.id,
@@ -131,6 +133,8 @@ class Marksheet {
     required this.score,
     required this.total,
     required this.timestamp,
+    this.questions = const [],
+    this.userAnswers = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -140,6 +144,8 @@ class Marksheet {
       'score': score,
       'total': total,
       'timestamp': timestamp.toIso8601String(),
+      'questions': questions,
+      'userAnswers': userAnswers,
     };
   }
 
@@ -150,6 +156,8 @@ class Marksheet {
       score: map['score'],
       total: map['total'],
       timestamp: DateTime.parse(map['timestamp']),
+      questions: map['questions'] ?? [],
+      userAnswers: List<int?>.from(map['userAnswers'] ?? []),
     );
   }
 

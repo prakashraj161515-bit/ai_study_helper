@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../providers/app_state.dart';
 import '../services/pdf_service.dart';
 import '../models/models.dart';
+import 'quiz_screen.dart';
 
 class MarksheetHistoryScreen extends StatelessWidget {
   const MarksheetHistoryScreen({super.key});
@@ -131,6 +132,29 @@ class MarksheetHistoryScreen extends StatelessWidget {
                          ],
                        ),
                      );
+                  },
+                ),
+                _buildAction(
+                  context,
+                  'Review',
+                  CupertinoIcons.list_bullet,
+                  Colors.orange,
+                  () {
+                    if (ms.questions.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No review data available for this marksheet.')),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReviewScreen(
+                            questions: ms.questions,
+                            userAnswers: ms.userAnswers,
+                          ),
+                        ),
+                      );
+                    }
                   },
                 ),
                 _buildAction(

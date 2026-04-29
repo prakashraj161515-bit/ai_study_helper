@@ -104,13 +104,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveMarksheet(String topic, int score, int total) async {
+  Future<void> saveMarksheet(String topic, int score, int total, List<dynamic> questions, List<int?> userAnswers) async {
     final item = Marksheet(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       topic: topic,
       score: score,
       total: total,
       timestamp: DateTime.now(),
+      questions: questions,
+      userAnswers: userAnswers,
     );
 
     _marksheets.insert(0, item);

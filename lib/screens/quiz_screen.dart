@@ -91,7 +91,7 @@ class _QuizScreenState extends State<QuizScreen> {
       setState(() => _showResult = true);
       final state = Provider.of<AppState>(context, listen: false);
       state.updateQuizResult(_score, _questions.length);
-      state.saveMarksheet(widget.topic, _score, _questions.length);
+      state.saveMarksheet(widget.topic, _score, _questions.length, _questions, _userAnswers);
     }
   }
 
