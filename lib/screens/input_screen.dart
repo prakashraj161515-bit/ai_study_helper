@@ -125,7 +125,6 @@ class _InputScreenState extends State<InputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.mode == InputMode.text ? 'AI Study Assistant' : widget.mode.name.toUpperCase()),
         centerTitle: true,
@@ -236,11 +235,12 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Widget _buildInputBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+        color: Theme.of(context).cardColor,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
         child: Column(
@@ -251,16 +251,17 @@ class _InputScreenState extends State<InputScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.3)),
                 ),
                 child: TextField(
                   controller: _questionController,
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: isDark ? Colors.white : const Color(0xFF2E7D32)),
+                  decoration: InputDecoration(
                     hintText: 'What would you like to know about this image?',
                     border: InputBorder.none,
-                    hintStyle: TextStyle(fontSize: 13, color: Color(0xFF2E7D32)),
+                    hintStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : const Color(0xFF2E7D32)),
                   ),
                 ),
               ),
@@ -270,15 +271,19 @@ class _InputScreenState extends State<InputScreen> {
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(color: const Color(0xFFF1F3F4), borderRadius: BorderRadius.circular(24)),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F3F4), 
+                      borderRadius: BorderRadius.circular(24)
+                    ),
                     child: TextField(
                       controller: _controller,
                       maxLines: 5,
                       minLines: 1,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
                         hintText: _imageProcessed ? 'Extracted text (Editable)...' : 'Ask anything...', 
                         border: InputBorder.none, 
-                        hintStyle: const TextStyle(fontSize: 14)
+                        hintStyle: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.grey)
                       ),
                     ),
                   ),
@@ -289,12 +294,12 @@ class _InputScreenState extends State<InputScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: _isListening ? Colors.red : const Color(0xFFF1F3F4),
+                      color: _isListening ? Colors.red : (isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F3F4)),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
-                      color: _isListening ? Colors.white : Colors.grey[600],
+                      color: _isListening ? Colors.white : (isDark ? Colors.white70 : Colors.grey[600]),
                       size: 20,
                     ),
                   ),
