@@ -159,26 +159,41 @@ class SelectionPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Darken the unselected area
-    final backgroundPaint = Paint()..color = Colors.black54;
-    final path = Path.combine(
-      PathOperation.difference,
-      Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
-      Path()..addRect(selection),
+    final paint = Paint()..color = Colors.black54;
+
+    // Draw 4 dark rectangles around the selection (avoids Path.combine which breaks on Web)
+    // Top bar
+    canvas.drawRect(
+      Rect.fromLTRB(0, 0, size.width, selection.top),
+      paint,
     );
-    canvas.drawPath(path, backgroundPaint);
+    // Bottom bar
+    canvas.drawRect(
+      Rect.fromLTRB(0, selection.bottom, size.width, size.height),
+      paint,
+    );
+    // Left bar
+    canvas.drawRect(
+      Rect.fromLTRB(0, selection.top, selection.left, selection.bottom),
+      paint,
+    );
+    // Right bar
+    canvas.drawRect(
+      Rect.fromLTRB(selection.right, selection.top, size.width, selection.bottom),
+      paint,
+    );
 
     // Draw selection border
     final borderPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 2.5;
     canvas.drawRect(selection, borderPaint);
-    
+
     // Draw corner handles
     final handlePaint = Paint()..color = Colors.blue;
-    const double handleSize = 10;
-    
+    const double handleSize = 12;
+
     canvas.drawRect(Rect.fromCenter(center: selection.topLeft, width: handleSize, height: handleSize), handlePaint);
     canvas.drawRect(Rect.fromCenter(center: selection.topRight, width: handleSize, height: handleSize), handlePaint);
     canvas.drawRect(Rect.fromCenter(center: selection.bottomLeft, width: handleSize, height: handleSize), handlePaint);
