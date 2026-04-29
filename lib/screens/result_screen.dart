@@ -26,13 +26,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _loadDetailed() async {
     final state = Provider.of<AppState>(context, listen: false);
-    if (!state.isPremium) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Upgrade to Premium for detailed answers!")),
-      );
-      return;
-    }
-
+    
     setState(() => _isLoading = true);
     try {
       final detailedAnswer = await state.askQuestion(widget.question, detailed: true);

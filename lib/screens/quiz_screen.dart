@@ -31,12 +31,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    final state = Provider.of<AppState>(context, listen: false);
-    if (state.isPremium) {
-      _selectedCount = 5;
-    } else {
-      _selectedCount = 4;
-    }
+    _selectedCount = 5;
   }
 
   Future<void> _fetchQuestions() async {
@@ -203,24 +198,11 @@ class _QuizScreenState extends State<QuizScreen> {
           children: [
             const Text('Questions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            if (!state.isPremium)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-                child: const Row(
-                  children: [
-                    Icon(Icons.lock_outline, size: 16, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('4 Questions (Free Version)', style: TextStyle(color: Colors.black87)),
-                  ],
-                ),
-              )
-            else
-              Wrap(spacing: 8, children: [5, 10, 15].map((c) => ChoiceChip(
-                label: Text('$c'), 
-                selected: _selectedCount == c,
-                onSelected: (s) => setState(() => _selectedCount = c),
-              )).toList()),
+            Wrap(spacing: 8, children: [5, 10, 15].map((c) => ChoiceChip(
+              label: Text('$c'), 
+              selected: _selectedCount == c,
+              onSelected: (s) => setState(() => _selectedCount = c),
+            )).toList()),
             const SizedBox(height: 24),
             const Text('Difficulty', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
@@ -256,12 +238,7 @@ class _QuizScreenState extends State<QuizScreen> {
             }),
             const SizedBox(height: 12),
             _buildResultAction('Download Marksheet', CupertinoIcons.cloud_download_fill, Colors.green, () {
-               final state = Provider.of<AppState>(context, listen: false);
-               if (!state.isPremium) {
-                 _showPremiumDialog();
-               } else {
-                 PDFService().generateMarksheet(_score, _questions.length, widget.topic);
-               }
+               PDFService().generateMarksheet(_score, _questions.length, widget.topic);
             }),
             const Spacer(),
             SizedBox(width: double.infinity, height: 56, child: OutlinedButton(
