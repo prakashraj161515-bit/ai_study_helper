@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,76 +34,163 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _base64Image = base64Encode(bytes);
       });
+      // Auto-save image to state
+      if (mounted) {
+        final state = Provider.of<AppState>(context, listen: false);
+        state.setProfile(_nameController.text.trim(), _base64Image);
+      }
     }
   }
 
   void _saveProfile() {
     final state = Provider.of<AppState>(context, listen: false);
     state.setProfile(_nameController.text.trim(), _base64Image);
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully!')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated!')));
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(icon: const Icon(Icons.settings_outlined), onPressed: () {}),
+        ],
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Stack(
-                alignment: Alignment.bottomRight,
+            // Green Header Card
+            Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: const Color(0xFF2E7D32).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+              ),
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                    backgroundImage: _base64Image != null 
-                        ? MemoryImage(base64Decode(_base64Image!)) 
-                        : null,
-                    child: _base64Image == null 
-                        ? Icon(CupertinoIcons.person_fill, size: 60, color: Theme.of(context).primaryColor)
-                        : null,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Colors.blue,
-                      shape: BoxShape.circle,
+                  Hero(
+                    tag: 'profile_avatar',
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                            child: CircleAvatar(
+                              radius: 45,
+                              backgroundColor: Colors.white24,
+                              backgroundImage: _base64Image != null 
+                                  ? MemoryImage(base64Decode(_base64Image!)) 
+                                  : null,
+                              child: _base64Image == null 
+                                  ? const Icon(CupertinoIcons.person_fill, size: 45, color: Colors.white)
+                                  : null,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(CupertinoIcons.camera_fill, color: Color(0xFF2E7D32), size: 14),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: const Icon(CupertinoIcons.camera_fill, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.userName ?? 'Student Name',
+                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'learner@studynova.com',
+                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      _showEditNameDialog(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF2E7D32),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                    ),
+                    child: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Your Name',
-                prefixIcon: const Icon(CupertinoIcons.person),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            
+            // Settings List
+            _buildSettingTile(CupertinoIcons.book, 'Subjects', () {}),
+            _buildSettingTile(CupertinoIcons.calendar, 'Study Plan', () {}),
+            _buildSettingTile(CupertinoIcons.bell, 'Reminders', () {}),
+            _buildSettingTile(CupertinoIcons.moon, 'Dark Mode', () {}, trailing: Switch(value: false, onChanged: (v) {}, activeColor: const Color(0xFF2E7D32))),
+            _buildSettingTile(CupertinoIcons.question_circle, 'Help & Support', () {}),
+            
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Divider(),
             ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Save Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-            ),
+            
+            _buildSettingTile(CupertinoIcons.square_arrow_right, 'Logout', () {}, color: Colors.red),
+            const SizedBox(height: 40),
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditNameDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Name'),
+        content: TextField(
+          controller: _nameController,
+          decoration: const InputDecoration(hintText: 'Enter your name'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              _saveProfile();
+              Navigator.pop(context);
+            }, 
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingTile(IconData icon, String title, VoidCallback onTap, {Widget? trailing, Color? color}) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      leading: Icon(icon, color: color ?? Colors.black87, size: 22),
+      title: Text(
+        title, 
+        style: TextStyle(
+          color: color ?? Colors.black87, 
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+      ),
+      trailing: trailing ?? Icon(CupertinoIcons.chevron_right, size: 14, color: Colors.grey[300]),
     );
   }
 

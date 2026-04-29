@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
 import 'screens/home_screen.dart';
+import 'screens/input_screen.dart';
+import 'screens/marksheet_history_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,31 +26,93 @@ class AIStudyHelperApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF007AFF), // iOS Blue
-          primary: const Color(0xFF007AFF),
-          secondary: const Color(0xFF5856D6), // iOS Purple
+          seedColor: const Color(0xFF2E7D32), // Professional Green
+          primary: const Color(0xFF2E7D32),
+          secondary: const Color(0xFF4CAF50),
           surface: Colors.white,
-          background: const Color(0xFFF2F2F7), // iOS Background Gray
+          background: const Color(0xFFF8FAF9), // Very light green-grey background
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF2F2F7),
+        scaffoldBackgroundColor: const Color(0xFFF8FAF9),
+        fontFamily: 'Inter', // Modern font (if available, otherwise fallback)
         cardTheme: CardThemeData(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+          shadowColor: Colors.black12,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           color: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          backgroundColor: Color(0xFFF2F2F7),
+          centerTitle: false,
+          backgroundColor: Colors.transparent,
           elevation: 0,
+          iconTheme: IconThemeData(color: Colors.black87),
           titleTextStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: const RootScreen(),
+    );
+  }
+}
+
+class RootScreen extends StatefulWidget {
+  const RootScreen({super.key});
+
+  @override
+  State<RootScreen> createState() => _RootScreenState();
+}
+
+class _RootScreenState extends State<RootScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const InputScreen(mode: InputMode.text), // Chat Tab
+    const InputScreen(mode: InputMode.scan), // Scan Tab
+    const MarksheetHistoryScreen(),           // Marksheet/Notes Tab
+    const ProfileScreen(),                    // Profile Tab
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF2E7D32),
+          unselectedItemColor: Colors.grey[400],
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          unselectedLabelStyle: const TextStyle(fontSize: 12),
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Chat'),
+            BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), activeIcon: Icon(Icons.qr_code_scanner), label: 'Scan'),
+            BottomNavigationBarItem(icon: Icon(Icons.description_outlined), activeIcon: Icon(Icons.description), label: 'Notes'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          ],
+        ),
+      ),
     );
   }
 }

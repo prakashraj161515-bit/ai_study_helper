@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -49,16 +48,9 @@ class _InputScreenState extends State<InputScreen> {
       setState(() => _isListening = false);
       return;
     }
-
     setState(() => _isListening = true);
-
     NativeSpeech.start((text, isFinal) {
-      if (mounted) {
-        setState(() {
-          _controller.text = text;
-        });
-      }
-      
+      if (mounted) setState(() => _controller.text = text);
       if (isFinal) {
         NativeSpeech.stop();
         if (mounted) setState(() => _isListening = false);
@@ -71,24 +63,18 @@ class _InputScreenState extends State<InputScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image == null) return;
-
     if (!mounted) return;
 
-    // Navigate to crop screen — pass XFile, get back Uint8List bytes
     final Uint8List? croppedBytes = await Navigator.push<Uint8List?>(
       context,
-      MaterialPageRoute(
-        builder: (context) => ImageCropScreen(imageFile: image),
-      ),
+      MaterialPageRoute(builder: (context) => ImageCropScreen(imageFile: image)),
     );
 
     if (croppedBytes == null) return;
 
     setState(() => _isLoading = true);
     try {
-      // Directly send cropped bytes to Gemini (no temp file needed — works on Web!)
-      final text = await AIService().processImage(croppedBytes,
-          prompt: 'Extract all text from this image clearly.');
+      final text = await AIService().processImage(croppedBytes, prompt: 'Extract all text from this image clearly.');
       setState(() {
         _controller.text = text;
         _isLoading = false;
@@ -105,22 +91,17 @@ class _InputScreenState extends State<InputScreen> {
 
   Future<void> _submit() async {
     if (_controller.text.trim().isEmpty) return;
-    
     setState(() => _isLoading = true);
     try {
       final state = Provider.of<AppState>(context, listen: false);
       final answer = await state.askQuestion(_controller.text);
-      
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ResultScreen(
-              question: _controller.text,
-              answer: answer,
-            ),
+            builder: (_) => ResultScreen(question: _controller.text, answer: answer),
           ),
-        );
+        ).then((_) => setState(() => _isLoading = false));
       }
     } catch (e) {
       if (mounted) {
@@ -133,58 +114,143 @@ class _InputScreenState extends State<InputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.mode.name.toUpperCase()),
-        actions: widget.mode == InputMode.voice
-            ? [
-                IconButton(
-                  icon: Icon(_isListening ? CupertinoIcons.mic_solid : CupertinoIcons.mic, color: _isListening ? Colors.red : null),
-                  onPressed: _toggleListening,
-                ),
-              ]
-            : null,
+        title: Text(widget.mode == InputMode.text ? 'AI Study Assistant' : widget.mode.name.toUpperCase()),
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: Column(
+        children: [
+          Expanded(
+            child: widget.mode == InputMode.text ? _buildChatView() : _buildDefaultView(),
+          ),
+          _buildInputBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatView() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        _buildChatBubble('Hello! How can I help with your studies today?', isAI: true),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            _buildQuickChip('Explain photosynthesis'),
+            _buildQuickChip('Solve math equation'),
+            _buildQuickChip('Summarize notes'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDefaultView() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            widget.mode == InputMode.scan ? CupertinoIcons.camera_viewfinder : 
+            widget.mode == InputMode.upload ? CupertinoIcons.cloud_upload : 
+            CupertinoIcons.mic_fill,
+            size: 80,
+            color: const Color(0xFF2E7D32).withOpacity(0.2),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            widget.mode == InputMode.scan ? 'Scan your notes to get instant help' :
+            widget.mode == InputMode.upload ? 'Upload a file for AI analysis' :
+            'Speak clearly to ask your question',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+          ),
+          const SizedBox(height: 40),
+          if (widget.mode == InputMode.scan || widget.mode == InputMode.upload)
+            ElevatedButton.icon(
+              onPressed: () => _pickImage(widget.mode == InputMode.scan ? ImageSource.camera : ImageSource.gallery),
+              icon: const Icon(Icons.add),
+              label: Text(widget.mode == InputMode.scan ? 'Open Camera' : 'Choose File'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatBubble(String text, {bool isAI = true}) {
+    return Align(
+      alignment: isAI ? Alignment.centerLeft : Alignment.centerRight,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isAI ? const Color(0xFFF1F3F4) : const Color(0xFF2E7D32),
+          borderRadius: BorderRadius.circular(20).copyWith(
+            bottomLeft: isAI ? const Radius.circular(0) : const Radius.circular(20),
+            bottomRight: isAI ? const Radius.circular(20) : const Radius.circular(0),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(color: isAI ? Colors.black87 : Colors.white, fontSize: 14, height: 1.4),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickChip(String label) {
+    return ActionChip(
+      label: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF2E7D32))),
+      backgroundColor: const Color(0xFFE8F5E9),
+      onPressed: () {
+        _controller.text = label;
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      side: BorderSide.none,
+    );
+  }
+
+  Widget _buildInputBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+      ),
+      child: SafeArea(
+        child: Row(
           children: [
             Expanded(
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextField(
-                    controller: _controller,
-                    maxLines: null,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter or paste your study question here...',
-                      border: InputBorder.none,
-                    ),
-                  ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(color: const Color(0xFFF1F3F4), borderRadius: BorderRadius.circular(24)),
+                child: TextField(
+                  controller: _controller,
+                  maxLines: 5,
+                  minLines: 1,
+                  decoration: const InputDecoration(hintText: 'Ask anything...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 14)),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: Consumer<AppState>(
-                builder: (context, state, child) {
-                  final bool isOffline = state.isOffline;
-                  return ElevatedButton(
-                    onPressed: (_isLoading || isOffline) ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isOffline ? Colors.grey : Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          isOffline ? 'No Internet' : 'Ask AI',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                  );
-                },
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: _isLoading ? null : _submit,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle),
+                child: _isLoading 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
               ),
             ),
           ],
