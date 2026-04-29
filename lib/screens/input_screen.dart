@@ -22,11 +22,13 @@ class InputScreen extends StatefulWidget {
 
 class _InputScreenState extends State<InputScreen> {
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _questionController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final OCRService _ocr = OCRService();
   
   bool _isLoading = false;
   bool _isListening = false;
+  bool _imageProcessed = false;
 
   @override
   void initState() {
@@ -78,6 +80,7 @@ class _InputScreenState extends State<InputScreen> {
       setState(() {
         _controller.text = text;
         _isLoading = false;
+        _imageProcessed = true;
       });
     } catch (e) {
       setState(() => _isLoading = false);
@@ -90,16 +93,24 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _submit() async {
-    if (_controller.text.trim().isEmpty) return;
+    final String fullPrompt = _imageProcessed 
+        ? "Image Content: ${_controller.text}\n\nUser Question: ${_questionController.text}"
+        : _controller.text;
+
+    if (fullPrompt.trim().isEmpty) return;
+    
     setState(() => _isLoading = true);
     try {
       final state = Provider.of<AppState>(context, listen: false);
-      final answer = await state.askQuestion(_controller.text);
+      final answer = await state.askQuestion(fullPrompt);
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ResultScreen(question: _controller.text, answer: answer),
+            builder: (_) => ResultScreen(
+              question: _imageProcessed ? _questionController.text : _controller.text, 
+              answer: answer
+            ),
           ),
         ).then((_) => setState(() => _isLoading = false));
       }
@@ -232,46 +243,74 @@ class _InputScreenState extends State<InputScreen> {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Container(
+            if (_imageProcessed) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(color: const Color(0xFFF1F3F4), borderRadius: BorderRadius.circular(24)),
-                child: TextField(
-                  controller: _controller,
-                  maxLines: 5,
-                  minLines: 1,
-                  decoration: const InputDecoration(hintText: 'Ask anything...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 14)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: _toggleListening,
-              child: Container(
-                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _isListening ? Colors.red : const Color(0xFFF1F3F4),
-                  shape: BoxShape.circle,
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.3)),
                 ),
-                child: Icon(
-                  _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
-                  color: _isListening ? Colors.white : Colors.grey[600],
-                  size: 20,
+                child: TextField(
+                  controller: _questionController,
+                  decoration: const InputDecoration(
+                    hintText: 'What would you like to know about this image?',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(fontSize: 13, color: Color(0xFF2E7D32)),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _isLoading ? null : _submit,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle),
-                child: _isLoading 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-              ),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(color: const Color(0xFFF1F3F4), borderRadius: BorderRadius.circular(24)),
+                    child: TextField(
+                      controller: _controller,
+                      maxLines: 5,
+                      minLines: 1,
+                      decoration: InputDecoration(
+                        hintText: _imageProcessed ? 'Extracted text (Editable)...' : 'Ask anything...', 
+                        border: InputBorder.none, 
+                        hintStyle: const TextStyle(fontSize: 14)
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _toggleListening,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _isListening ? Colors.red : const Color(0xFFF1F3F4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
+                      color: _isListening ? Colors.white : Colors.grey[600],
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _isLoading ? null : _submit,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle),
+                    child: _isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
