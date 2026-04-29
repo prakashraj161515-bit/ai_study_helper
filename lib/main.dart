@@ -70,9 +70,8 @@ class _RootScreenState extends State<RootScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const InputScreen(mode: InputMode.text), // Chat Tab
     const InputScreen(mode: InputMode.scan), // Scan Tab
-    const MarksheetHistoryScreen(),           // Marksheet/Notes Tab
+    const MarksheetHistoryScreen(),           // Quiz/Marksheet Tab
     const ProfileScreen(),                    // Profile Tab
   ];
 
@@ -106,9 +105,8 @@ class _RootScreenState extends State<RootScreen> {
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Chat'),
             BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), activeIcon: Icon(Icons.qr_code_scanner), label: 'Scan'),
-            BottomNavigationBarItem(icon: Icon(Icons.description_outlined), activeIcon: Icon(Icons.description), label: 'Notes'),
+            BottomNavigationBarItem(icon: Icon(Icons.quiz_outlined), activeIcon: Icon(Icons.quiz), label: 'Quiz'),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
           ],
         ),

@@ -10,6 +10,7 @@ import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'marksheet_history_screen.dart';
 import 'premium_screen.dart';
+import 'progress_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -155,12 +156,12 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildActionCard(
                     context,
-                    'Ask AI',
-                    'Get instant answers to any question',
-                    CupertinoIcons.chat_bubble_2_fill,
+                    'Daily Quiz',
+                    'Practice MCQs & test your knowledge',
+                    CupertinoIcons.checkmark_seal_fill,
                     const Color(0xFFE8F5E9),
                     const Color(0xFF2E7D32),
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InputScreen(mode: InputMode.text))),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MarksheetHistoryScreen())),
                   ),
                   _buildActionCard(
                     context,
@@ -182,12 +183,12 @@ class HomeScreen extends StatelessWidget {
                   ),
                   _buildActionCard(
                     context,
-                    'Saved Notes',
-                    'View your saved notes & chats',
-                    CupertinoIcons.bookmark_fill,
+                    'Analytics',
+                    'Track your progress & performance',
+                    CupertinoIcons.graph_square_fill,
                     const Color(0xFFF3E5F5),
                     const Color(0xFF7B1FA2),
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen())),
                   ),
                 ],
               ),
