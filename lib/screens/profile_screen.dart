@@ -57,9 +57,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Profile'),
-        actions: [
-          IconButton(icon: const Icon(Icons.settings_outlined), onPressed: () {}),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -138,18 +135,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildSettingTile(CupertinoIcons.star_fill, 'Get Premium', () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
             }, color: Colors.amber),
-            _buildSettingTile(CupertinoIcons.book, 'Subjects', () {}),
             _buildSettingTile(CupertinoIcons.calendar, 'Study Plan', () {}),
             _buildSettingTile(CupertinoIcons.bell, 'Reminders', () {}),
             _buildSettingTile(CupertinoIcons.moon, 'Dark Mode', () {}, trailing: Switch(value: false, onChanged: (v) {}, activeColor: const Color(0xFF2E7D32))),
-            _buildSettingTile(CupertinoIcons.question_circle, 'Help & Support', () {}),
             
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Divider(),
-            ),
-            
-            _buildSettingTile(CupertinoIcons.square_arrow_right, 'Logout', () {}, color: Colors.red),
             const SizedBox(height: 40),
           ],
         ),
