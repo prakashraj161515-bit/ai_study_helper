@@ -9,6 +9,7 @@ import 'input_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'marksheet_history_screen.dart';
+import 'premium_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -43,6 +44,27 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const Spacer(),
+                  if (!state.isPremium)
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(CupertinoIcons.star_fill, color: Colors.amber, size: 14),
+                            SizedBox(width: 4),
+                            Text('Premium', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 12),
                   InkWell(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
                     child: Hero(

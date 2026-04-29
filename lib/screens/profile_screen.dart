@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import 'premium_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -134,6 +135,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             
             // Settings List
+            _buildSettingTile(CupertinoIcons.star_fill, 'Get Premium', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
+            }, color: Colors.amber),
             _buildSettingTile(CupertinoIcons.book, 'Subjects', () {}),
             _buildSettingTile(CupertinoIcons.calendar, 'Study Plan', () {}),
             _buildSettingTile(CupertinoIcons.bell, 'Reminders', () {}),
