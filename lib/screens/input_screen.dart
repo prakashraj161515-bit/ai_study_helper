@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/ai_service.dart';
 import '../services/speech_service.dart';
 import '../services/ocr_service.dart';
 import 'image_crop_screen.dart';
@@ -71,21 +74,21 @@ class _InputScreenState extends State<InputScreen> {
 
     if (!mounted) return;
 
-    // Navigate to crop screen
-    final croppedPath = await Navigator.push<String?>(
+    // Navigate to crop screen — pass XFile, get back Uint8List bytes
+    final Uint8List? croppedBytes = await Navigator.push<Uint8List?>(
       context,
       MaterialPageRoute(
-        builder: (context) => ImageCropScreen(imagePath: image.path),
+        builder: (context) => ImageCropScreen(imageFile: image),
       ),
     );
 
-    if (croppedPath == null) return;
+    if (croppedBytes == null) return;
 
     setState(() => _isLoading = true);
     try {
-      // Create a fake XFile from the cropped path for OCRService
-      final croppedFile = XFile(croppedPath);
-      final text = await _ocr.recognizeText(croppedFile);
+      // Directly send cropped bytes to Gemini (no temp file needed — works on Web!)
+      final text = await AIService().processImage(croppedBytes,
+          prompt: 'Extract all text from this image clearly.');
       setState(() {
         _controller.text = text;
         _isLoading = false;
