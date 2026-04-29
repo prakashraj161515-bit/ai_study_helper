@@ -3,9 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  connectivity_plus
+  cloud_firestore
   file_selector_windows
-  printing
+  firebase_core
+  flutter_tts
   speech_to_text_windows
 )
 
