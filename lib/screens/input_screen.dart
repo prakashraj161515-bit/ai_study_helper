@@ -93,12 +93,27 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _submit() async {
-    final String fullPrompt = _imageProcessed 
-        ? "Image Content: ${_controller.text}\n\nUser Question: ${_questionController.text}"
-        : _controller.text;
+    if (_controller.text.trim().isEmpty) return;
 
-    if (fullPrompt.trim().isEmpty) return;
-    
+    String fullPrompt;
+    String displayQuestion;
+
+    if (_imageProcessed) {
+      final hasQuestion = _questionController.text.trim().isNotEmpty;
+      if (hasQuestion) {
+        // User asked a specific question about the image
+        fullPrompt = "The following is text extracted from an image:\n\n${_controller.text}\n\nAnswer this question based on the above content: ${_questionController.text}";
+        displayQuestion = _questionController.text;
+      } else {
+        // No question typed — auto explain/summarize the scanned content
+        fullPrompt = "The following is text extracted from an image. Please explain, summarize, and highlight the key points clearly:\n\n${_controller.text}";
+        displayQuestion = "Explain the scanned content";
+      }
+    } else {
+      fullPrompt = _controller.text;
+      displayQuestion = _controller.text;
+    }
+
     setState(() => _isLoading = true);
     try {
       final state = Provider.of<AppState>(context, listen: false);
@@ -107,10 +122,7 @@ class _InputScreenState extends State<InputScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ResultScreen(
-              question: _imageProcessed ? _questionController.text : _controller.text, 
-              answer: answer
-            ),
+            builder: (_) => ResultScreen(question: displayQuestion, answer: answer),
           ),
         ).then((_) => setState(() => _isLoading = false));
       }
