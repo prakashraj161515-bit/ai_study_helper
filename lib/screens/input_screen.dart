@@ -105,9 +105,9 @@ class _InputScreenState extends State<InputScreen> {
         fullPrompt = "The following is text extracted from an image:\n\n${_controller.text}\n\nAnswer this question based on the above content: ${_questionController.text}";
         displayQuestion = _questionController.text;
       } else {
-        // No question typed — auto explain/summarize the scanned content
-        fullPrompt = "The following is text extracted from an image. Please explain, summarize, and highlight the key points clearly:\n\n${_controller.text}";
-        displayQuestion = "Explain the scanned content";
+        // No question typed — directly answer whatever is in the image
+        fullPrompt = "The following text was extracted from an image. Directly answer or solve the question/problem present in it:\n\n${_controller.text}";
+        displayQuestion = _controller.text;
       }
     } else {
       fullPrompt = _controller.text;
