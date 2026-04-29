@@ -142,17 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildSettingTile(CupertinoIcons.bell, 'Reminders', () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ReminderScreen()));
             }),
-            _buildSettingTile(
-              state.isDarkMode ? CupertinoIcons.sun_max : CupertinoIcons.moon, 
-              'Dark Mode', 
-              () => state.toggleDarkMode(), 
-              trailing: Switch(
-                value: state.isDarkMode, 
-                onChanged: (v) => state.toggleDarkMode(), 
-                activeColor: const Color(0xFF2E7D32)
-              )
-            ),
-            
             const SizedBox(height: 40),
           ],
         ),

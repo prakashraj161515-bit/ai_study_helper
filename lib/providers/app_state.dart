@@ -11,11 +11,13 @@ class AppState extends ChangeNotifier {
   final AIService _ai = AIService();
   final Connectivity _connectivity = Connectivity();
   final AudioPlayer _audioPlayer = AudioPlayer();
-  Timer? _alarmTimer;
+  Timer? _checkTimer;
+  Timer? _alarmStopTimer;
   String? _lastRungTime;
+  bool _isAlarmRinging = false;
+  String _alarmLabel = '';
 
   bool _isPremium = false;
-  bool _isDarkMode = false;
   UserProgress _progress = UserProgress();
   List<StudyHistoryItem> _history = [];
   int _dailyCount = 0;
@@ -23,12 +25,12 @@ class AppState extends ChangeNotifier {
   String? _userName;
   String? _userPhoto;
   List<Marksheet> _marksheets = [];
-
   List<StudyPlan> _studyPlans = [];
   List<Reminder> _reminders = [];
 
   bool get isPremium => _isPremium;
-  bool get isDarkMode => _isDarkMode;
+  bool get isAlarmRinging => _isAlarmRinging;
+  String get alarmLabel => _alarmLabel;
   List<StudyPlan> get studyPlans => _studyPlans;
   List<Reminder> get reminders => _reminders;
   UserProgress get progress => _progress;
@@ -46,69 +48,86 @@ class AppState extends ChangeNotifier {
     _startAlarmSystem();
   }
 
+  // ─── Alarm System ──────────────────────────────────────────────
   void _startAlarmSystem() {
-    _alarmTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _checkAlarms();
-    });
+    _checkTimer = Timer.periodic(const Duration(seconds: 15), (_) => _checkAlarms());
   }
 
   void _checkAlarms() {
+    if (_isAlarmRinging) return;
     final now = DateTime.now();
-    final String currentTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-    
-    // Convert 12h format from UI to 24h for comparison
-    // Simple logic: Reminders/Plans store time as "HH:MM AM/PM"
-    
-    if (_lastRungTime == currentTime) return;
+    final currentKey = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    if (_lastRungTime == currentKey) return;
 
-    bool shouldRing = false;
+    String? label;
 
-    for (var reminder in _reminders) {
-      if (reminder.isActive && _isTimeMatch(reminder.time, now)) {
-        shouldRing = true;
+    for (var r in _reminders) {
+      if (r.isActive && _isTimeMatch(r.time, now)) {
+        label = r.title;
         break;
       }
     }
-
-    if (!shouldRing) {
-      for (var plan in _studyPlans) {
-        if (!plan.isCompleted && _isTimeMatch(plan.time, now)) {
-          shouldRing = true;
+    if (label == null) {
+      for (var p in _studyPlans) {
+        if (!p.isCompleted && _isTimeMatch(p.time, now)) {
+          label = '${p.subject} – ${p.topic}';
           break;
         }
       }
     }
 
-    if (shouldRing) {
-      _ring();
-      _lastRungTime = currentTime;
+    if (label != null) {
+      _lastRungTime = currentKey;
+      _startRinging(label);
     }
   }
 
   bool _isTimeMatch(String timeStr, DateTime now) {
     try {
-      // timeStr is like "09:00 AM"
-      final parts = timeStr.toUpperCase().split(' ');
-      if (parts.length < 2) return false;
-      
-      final timeParts = parts[0].split(':');
-      int hour = int.parse(timeParts[0]);
-      int minute = int.parse(timeParts[1]);
-      String ampm = parts[1];
+      // Supports "HH:MM AM/PM" or "HH:MM" (24h)
+      final upper = timeStr.trim().toUpperCase();
+      final hasMeridiem = upper.contains('AM') || upper.contains('PM');
+      String timePart = upper.replaceAll('AM', '').replaceAll('PM', '').trim();
+      final parts = timePart.split(':');
+      int hour = int.parse(parts[0]);
+      int minute = int.parse(parts[1]);
 
-      if (ampm == "PM" && hour < 12) hour += 12;
-      if (ampm == "AM" && hour == 12) hour = 0;
+      if (hasMeridiem) {
+        final isPM = upper.contains('PM');
+        if (isPM && hour < 12) hour += 12;
+        if (!isPM && hour == 12) hour = 0;
+      }
 
       return now.hour == hour && now.minute == minute;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
 
-  void _ring() {
-    _audioPlayer.play(UrlSource('https://actions.google.com/sounds/v1/alarms/alarm_clock_short.ogg'));
+  void _startRinging(String label) {
+    _isAlarmRinging = true;
+    _alarmLabel = label;
+    notifyListeners();
+
+    _audioPlayer.setReleaseMode(ReleaseMode.loop);
+    _audioPlayer.play(UrlSource(
+      'https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg',
+    ));
+
+    // Auto-stop after 1 minute
+    _alarmStopTimer = Timer(const Duration(minutes: 1), stopAlarm);
   }
 
+  void stopAlarm() {
+    _alarmStopTimer?.cancel();
+    _alarmStopTimer = null;
+    _audioPlayer.stop();
+    _isAlarmRinging = false;
+    _alarmLabel = '';
+    notifyListeners();
+  }
+
+  // ─── Connectivity ───────────────────────────────────────────────
   void _monitorConnectivity() {
     _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
       _isOffline = results.contains(ConnectivityResult.none);
@@ -116,9 +135,9 @@ class AppState extends ChangeNotifier {
     });
   }
 
+  // ─── Load Data ──────────────────────────────────────────────────
   Future<void> _loadInitialData() async {
     _isPremium = await _storage.isPremium();
-    _isDarkMode = await _storage.getDarkMode();
     _progress = await _storage.getProgress();
     _history = await _storage.getHistory();
     _dailyCount = await _storage.getDailyQuestionCount();
@@ -130,6 +149,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── Study Plans ────────────────────────────────────────────────
   Future<void> addStudyPlan(StudyPlan plan) async {
     _studyPlans.add(plan);
     await _storage.saveStudyPlans(_studyPlans);
@@ -137,9 +157,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> updateStudyPlan(StudyPlan plan) async {
-    final index = _studyPlans.indexWhere((e) => e.id == plan.id);
-    if (index != -1) {
-      _studyPlans[index] = plan;
+    final i = _studyPlans.indexWhere((e) => e.id == plan.id);
+    if (i != -1) {
+      _studyPlans[i] = plan;
       await _storage.saveStudyPlans(_studyPlans);
       notifyListeners();
     }
@@ -151,6 +171,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── Reminders ──────────────────────────────────────────────────
   Future<void> addReminder(Reminder reminder) async {
     _reminders.add(reminder);
     await _storage.saveReminders(_reminders);
@@ -158,9 +179,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> updateReminder(Reminder reminder) async {
-    final index = _reminders.indexWhere((e) => e.id == reminder.id);
-    if (index != -1) {
-      _reminders[index] = reminder;
+    final i = _reminders.indexWhere((e) => e.id == reminder.id);
+    if (i != -1) {
+      _reminders[i] = reminder;
       await _storage.saveReminders(_reminders);
       notifyListeners();
     }
@@ -172,16 +193,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleDarkMode() async {
-    _isDarkMode = !_isDarkMode;
-    await _storage.setDarkMode(_isDarkMode);
-    notifyListeners();
-  }
-
+  // ─── Profile ────────────────────────────────────────────────────
   Future<void> setProfile(String name, String? base64Photo) async {
     _userName = name;
     await _storage.setUserName(name);
-    
     if (base64Photo != null) {
       _userPhoto = base64Photo;
       await _storage.setUserPhoto(base64Photo);
@@ -195,13 +210,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── AI / Questions ─────────────────────────────────────────────
   Future<String> askQuestion(String prompt, {bool detailed = false}) async {
     if (!canAskQuestion) {
-      throw Exception("Daily limit reached. Upgrade to Premium for unlimited questions!");
+      throw Exception('Daily limit reached. Upgrade to Premium for unlimited questions!');
     }
-
     final answer = await _ai.askQuestion(prompt, detailed: detailed);
-    
+
     final item = StudyHistoryItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       question: prompt,
@@ -211,14 +226,11 @@ class AppState extends ChangeNotifier {
     );
 
     _history.insert(0, item);
-    if (!_isPremium && _history.length > 20) {
-      _history.removeLast();
-    }
-    
+    if (!_isPremium && _history.length > 20) _history.removeLast();
+
     await _storage.saveHistoryItem(item, maxItems: _isPremium ? 1000 : 20);
     await _storage.incrementDailyCount();
     _dailyCount = await _storage.getDailyQuestionCount();
-    
     notifyListeners();
     return answer;
   }
@@ -231,7 +243,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveMarksheet(String topic, int score, int total, List<dynamic> questions, List<int?> userAnswers) async {
+  Future<void> saveMarksheet(String topic, int score, int total,
+      List<dynamic> questions, List<int?> userAnswers) async {
     final item = Marksheet(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       topic: topic,
@@ -243,11 +256,17 @@ class AppState extends ChangeNotifier {
     );
 
     _marksheets.insert(0, item);
-    if (!_isPremium && _marksheets.length > 5) {
-      _marksheets.removeLast();
-    }
-    
+    if (!_isPremium && _marksheets.length > 5) _marksheets.removeLast();
+
     await _storage.saveMarksheet(item, maxItems: _isPremium ? 1000 : 5);
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _checkTimer?.cancel();
+    _alarmStopTimer?.cancel();
+    _audioPlayer.dispose();
+    super.dispose();
   }
 }

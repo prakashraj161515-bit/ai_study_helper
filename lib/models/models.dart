@@ -166,9 +166,9 @@ class Marksheet {
 }
 class StudyPlan {
   final String id;
-  final String subject;
-  final String time;
-  final String topic;
+  String subject;
+  String time;
+  String topic;
   bool isCompleted;
 
   StudyPlan({
@@ -202,8 +202,8 @@ class StudyPlan {
 
 class Reminder {
   final String id;
-  final String title;
-  final String time;
+  String title;
+  String time;
   bool isActive;
 
   Reminder({
