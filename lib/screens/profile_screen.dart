@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import 'premium_screen.dart';
+import 'study_plan_screen.dart';
+import 'reminder_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -135,9 +137,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildSettingTile(CupertinoIcons.star_fill, 'Get Premium', () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
             }, color: Colors.amber),
-            _buildSettingTile(CupertinoIcons.calendar, 'Study Plan', () {}),
-            _buildSettingTile(CupertinoIcons.bell, 'Reminders', () {}),
-            _buildSettingTile(CupertinoIcons.moon, 'Dark Mode', () {}, trailing: Switch(value: false, onChanged: (v) {}, activeColor: const Color(0xFF2E7D32))),
+            _buildSettingTile(CupertinoIcons.calendar, 'Study Plan', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const StudyPlanScreen()));
+            }),
+            _buildSettingTile(CupertinoIcons.bell, 'Reminders', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ReminderScreen()));
+            }),
+            _buildSettingTile(
+              state.isDarkMode ? CupertinoIcons.sun_max : CupertinoIcons.moon, 
+              'Dark Mode', 
+              () => state.toggleDarkMode(), 
+              trailing: Switch(
+                value: state.isDarkMode, 
+                onChanged: (v) => state.toggleDarkMode(), 
+                activeColor: const Color(0xFF2E7D32)
+              )
+            ),
             
             const SizedBox(height: 40),
           ],

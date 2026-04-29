@@ -11,6 +11,17 @@ class StorageService {
   static const String _keyUserName = 'user_name';
   static const String _keyUserPhoto = 'user_photo';
   static const String _keyMarksheets = 'marksheets';
+  static const String _keyDarkMode = 'is_dark_mode';
+
+  Future<bool> getDarkMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyDarkMode) ?? false;
+  }
+
+  Future<void> setDarkMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyDarkMode, value);
+  }
 
   Future<String?> getUserName() async {
     final prefs = await SharedPreferences.getInstance();

@@ -21,36 +21,39 @@ class AIStudyHelperApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = Provider.of<AppState>(context);
     return MaterialApp(
       title: 'Study Nova',
       debugShowCheckedModeBanner: false,
+      themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
+        primaryColor: const Color(0xFF2E7D32),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E7D32), // Professional Green
-          primary: const Color(0xFF2E7D32),
-          secondary: const Color(0xFF4CAF50),
-          surface: Colors.white,
-          background: const Color(0xFFF8FAF9), // Very light green-grey background
+          seedColor: const Color(0xFF2E7D32),
+          brightness: Brightness.light,
         ),
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAF9),
-        fontFamily: 'Inter', // Modern font (if available, otherwise fallback)
-        cardTheme: CardThemeData(
-          elevation: 4,
-          shadowColor: Colors.black12,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          color: Colors.white,
-        ),
         appBarTheme: const AppBarTheme(
-          centerTitle: false,
           backgroundColor: Colors.transparent,
+          foregroundColor: Colors.black87,
           elevation: 0,
-          iconTheme: IconThemeData(color: Colors.black87),
-          titleTextStyle: TextStyle(
-            color: Colors.black87,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
+      ),
+      darkTheme: ThemeData(
+        primaryColor: const Color(0xFF2E7D32),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2E7D32),
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
       home: const RootScreen(),

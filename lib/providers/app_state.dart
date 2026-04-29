@@ -10,6 +10,7 @@ class AppState extends ChangeNotifier {
   final Connectivity _connectivity = Connectivity();
 
   bool _isPremium = false;
+  bool _isDarkMode = false;
   UserProgress _progress = UserProgress();
   List<StudyHistoryItem> _history = [];
   int _dailyCount = 0;
@@ -19,6 +20,7 @@ class AppState extends ChangeNotifier {
   List<Marksheet> _marksheets = [];
 
   bool get isPremium => _isPremium;
+  bool get isDarkMode => _isDarkMode;
   UserProgress get progress => _progress;
   List<StudyHistoryItem> get history => _history;
   int get dailyCount => _dailyCount;
@@ -42,12 +44,19 @@ class AppState extends ChangeNotifier {
 
   Future<void> _loadInitialData() async {
     _isPremium = await _storage.isPremium();
+    _isDarkMode = await _storage.getDarkMode();
     _progress = await _storage.getProgress();
     _history = await _storage.getHistory();
     _dailyCount = await _storage.getDailyQuestionCount();
     _userName = await _storage.getUserName();
     _userPhoto = await _storage.getUserPhoto();
     _marksheets = await _storage.getMarksheets();
+    notifyListeners();
+  }
+
+  Future<void> toggleDarkMode() async {
+    _isDarkMode = !_isDarkMode;
+    await _storage.setDarkMode(_isDarkMode);
     notifyListeners();
   }
 
