@@ -134,7 +134,10 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.grey[400], fontSize: 14),
                         ),
                       ),
-                      const Icon(CupertinoIcons.mic_fill, color: Color(0xFF2E7D32), size: 20),
+                      GestureDetector(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InputScreen(mode: InputMode.voice))),
+                        child: const Icon(CupertinoIcons.mic_fill, color: Color(0xFF2E7D32), size: 20),
+                      ),
                     ],
                   ),
                 ),

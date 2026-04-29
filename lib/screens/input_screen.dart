@@ -135,6 +135,10 @@ class _InputScreenState extends State<InputScreen> {
       padding: const EdgeInsets.all(20),
       children: [
         _buildChatBubble('Hello! How can I help with your studies today?', isAI: true),
+        if (_isListening) ...[
+          const SizedBox(height: 12),
+          _buildChatBubble('Listening...', isAI: true),
+        ],
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -243,6 +247,22 @@ class _InputScreenState extends State<InputScreen> {
               ),
             ),
             const SizedBox(width: 12),
+            GestureDetector(
+              onTap: _toggleListening,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _isListening ? Colors.red : const Color(0xFFF1F3F4),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
+                  color: _isListening ? Colors.white : Colors.grey[600],
+                  size: 20,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: _isLoading ? null : _submit,
               child: Container(
