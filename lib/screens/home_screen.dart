@@ -144,52 +144,45 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              // Action Grid
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.15,
-                children: [
-                  _buildActionCard(
-                    context,
-                    'Daily Quiz',
-                    'Practice MCQs & test your knowledge',
-                    CupertinoIcons.checkmark_seal_fill,
-                    const Color(0xFFE8F5E9),
-                    const Color(0xFF2E7D32),
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MarksheetHistoryScreen())),
-                  ),
-                  _buildActionCard(
-                    context,
-                    'Scan Notes',
-                    'Extract notes & summarize instantly',
-                    CupertinoIcons.camera_viewfinder,
-                    const Color(0xFFE3F2FD),
-                    const Color(0xFF1976D2),
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InputScreen(mode: InputMode.scan))),
-                  ),
-                  _buildActionCard(
-                    context,
-                    'Upload PDF',
-                    'Analyze your study material (PDF)',
-                    CupertinoIcons.doc_fill,
-                    const Color(0xFFFFF3E0),
-                    const Color(0xFFF57C00),
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InputScreen(mode: InputMode.upload))),
-                  ),
-                  _buildActionCard(
-                    context,
-                    'Analytics',
-                    'Track your progress & performance',
-                    CupertinoIcons.graph_square_fill,
-                    const Color(0xFFF3E5F5),
-                    const Color(0xFF7B1FA2),
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen())),
-                  ),
-                ],
+              // Action Cards (Horizontal)
+              const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 140,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildActionCard(
+                      context,
+                      'Scan Notes',
+                      'Summarize instantly',
+                      CupertinoIcons.camera_viewfinder,
+                      const Color(0xFFE3F2FD),
+                      const Color(0xFF1976D2),
+                      () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InputScreen(mode: InputMode.scan))),
+                    ),
+                    const SizedBox(width: 16),
+                    _buildActionCard(
+                      context,
+                      'Upload PDF',
+                      'Analyze material',
+                      CupertinoIcons.doc_fill,
+                      const Color(0xFFFFF3E0),
+                      const Color(0xFFF57C00),
+                      () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InputScreen(mode: InputMode.upload))),
+                    ),
+                    const SizedBox(width: 16),
+                    _buildActionCard(
+                      context,
+                      'Your Progress',
+                      'Track performance',
+                      CupertinoIcons.graph_square_fill,
+                      const Color(0xFFF3E5F5),
+                      const Color(0xFF7B1FA2),
+                      () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen())),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 
@@ -274,6 +267,7 @@ class HomeScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
+        width: 150,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -290,11 +284,11 @@ class HomeScreen extends StatelessWidget {
               child: Icon(icon, color: iconColor, size: 22),
             ),
             const Spacer(),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: -0.3)),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: -0.3)),
             const SizedBox(height: 4),
             Text(
               subtitle, 
-              style: TextStyle(color: Colors.grey[500], fontSize: 11, height: 1.3),
+              style: TextStyle(color: Colors.grey[500], fontSize: 10, height: 1.3),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -332,7 +326,6 @@ class HomeScreen extends StatelessWidget {
         ),
         trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: Colors.grey[300]),
         onTap: () {
-          // Navigating to history detail (already existing function)
           Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
         },
       ),

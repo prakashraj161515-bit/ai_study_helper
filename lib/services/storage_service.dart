@@ -117,7 +117,6 @@ class StorageService {
       } else if (difference > 1) {
         newStreak = 1;
       }
-      // If difference == 0, streak remains same (already counted today)
     } else {
       newStreak = 1;
     }
@@ -127,6 +126,39 @@ class StorageService {
       lastActiveDate: today,
       totalQuestions: progress.totalQuestions + 1,
       correctAnswers: progress.correctAnswers + (isCorrect ? 1 : 0),
+    );
+    
+    await saveProgress(newProgress);
+  }
+
+  Future<void> recordLoginProgress() async {
+    final progress = await getProgress();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    DateTime? lastActive = progress.lastActiveDate;
+    int newStreak = progress.streak;
+
+    if (lastActive != null) {
+      final lastDate = DateTime(lastActive.year, lastActive.month, lastActive.day);
+      final difference = today.difference(lastDate).inDays;
+      
+      if (difference == 1) {
+        newStreak++;
+      } else if (difference > 1) {
+        newStreak = 1;
+      } else if (difference == 0) {
+        return; // Already recorded today
+      }
+    } else {
+      newStreak = 1;
+    }
+
+    final newProgress = UserProgress(
+      streak: newStreak,
+      lastActiveDate: today,
+      totalQuestions: progress.totalQuestions,
+      correctAnswers: progress.correctAnswers,
     );
     
     await saveProgress(newProgress);

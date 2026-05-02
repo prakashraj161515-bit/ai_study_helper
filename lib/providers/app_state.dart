@@ -138,6 +138,7 @@ class AppState extends ChangeNotifier {
   // ─── Load Data ──────────────────────────────────────────────────
   Future<void> _loadInitialData() async {
     _isPremium = await _storage.isPremium();
+    await _storage.recordLoginProgress();
     _progress = await _storage.getProgress();
     _history = await _storage.getHistory();
     _dailyCount = await _storage.getDailyQuestionCount();
